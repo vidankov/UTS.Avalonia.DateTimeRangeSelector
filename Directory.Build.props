@@ -1,0 +1,10 @@
+﻿<Project>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Charset>UTF-8</Charset>
+		<AvaloniaVersion>11.3.14</AvaloniaVersion>
+		<SystemReactiveVersion>6.1.0</SystemReactiveVersion>
+	</PropertyGroup>
+</Project>

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<Folder Include="Core\" />
+		<Folder Include="Controls\" />
+		<Folder Include="Events\" />
+		<Folder Include="Converters\" />
+		<Folder Include="Styles\" />
+		<Folder Include="Themes\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+		<PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
+	</ItemGroup>
+
+</Project>

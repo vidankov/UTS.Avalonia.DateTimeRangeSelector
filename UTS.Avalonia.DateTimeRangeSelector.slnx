@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/solution Items/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="nuget.config" />
+    <File Path="PROJECT_SPEC.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/UTS.DateTimeRangeSelector.DemoApp/UTS.DateTimeRangeSelector.DemoApp.csproj" Id="1aac9e43-f377-4db3-b20d-ada69544e4e3" />
+    <Project Path="src/UTS.DateTimeRangeSelector.Tests/UTS.DateTimeRangeSelector.Tests.csproj" Id="70bc8adf-dee1-4e3c-b7c1-46e9bdf1849a" />
+    <Project Path="src/UTS.DateTimeRangeSelector/UTS.DateTimeRangeSelector.csproj" Id="2813658f-f176-4a05-b76d-df8dce8c7358" />
+  </Folder>
+</Solution>
