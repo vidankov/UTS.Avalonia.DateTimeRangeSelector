@@ -27,13 +27,16 @@
 Область действия: только **`src/Avalonia.UI.Component/`**.
 
 ```text
-Avalonia.UI.Component/
-├── Core/                 Чистая предметная область — без ссылок на Avalonia
-├── Controls/             TemplatedControls + тип начальной загрузки стилей
-├── Events/               Типы аргументов маршрутизируемых событий
-├── Converters/           Конвертеры значений XAML
-├── Styles/               Темы элементов управления (словари ресурсов AXAML)
-└── Themes/               Общая настройка тем (Generic + стили селекторов)
+src/
+├── UTS.DateTimeRangeSelector/
+│   ├── Core/                 Чистая предметная область — без ссылок на Avalonia
+│   ├── Controls/             TemplatedControls + тип начальной загрузки стилей
+│   ├── Events/               Типы аргументов маршрутизируемых событий
+│   ├── Converters/           Конвертеры значений XAML
+│   ├── Styles/               Темы элементов управления (словари ресурсов AXAML)
+│   └── Themes/               Общая настройка тем (Generic + стили селекторов)
+├── UTS.DateTimeRangeSelector.Tests/
+└── UTS.DateTimeRangeSelector.DemoApp/
 ```
 
 ---
