@@ -2,16 +2,28 @@
 
 	<ItemGroup>
 		<Folder Include="Core\" />
-		<Folder Include="Controls\" />
 		<Folder Include="Events\" />
-		<Folder Include="Converters\" />
-		<Folder Include="Styles\" />
 		<Folder Include="Themes\" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
 		<PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Styles\**\*.axaml" />
+		<AvaloniaResource Include="Themes\**\*.axaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AvaloniaXaml Remove="Styles\DateTimePickerPanel.axaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AvaloniaResource Update="Styles\DateTimePickerPanel.axaml">
+	    <SubType>Designer</SubType>
+	  </AvaloniaResource>
 	</ItemGroup>
 
 </Project>
