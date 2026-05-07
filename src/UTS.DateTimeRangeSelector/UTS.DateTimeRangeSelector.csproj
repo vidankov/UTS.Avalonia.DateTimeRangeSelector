@@ -18,10 +18,14 @@
 
 	<ItemGroup>
 	  <AvaloniaXaml Remove="Styles\DateTimePickerPanel.axaml" />
+	  <AvaloniaXaml Remove="Styles\DateTimeRangeSelector.axaml" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <AvaloniaResource Update="Styles\DateTimePickerPanel.axaml">
+	    <SubType>Designer</SubType>
+	  </AvaloniaResource>
+	  <AvaloniaResource Update="Styles\DateTimeRangeSelector.axaml">
 	    <SubType>Designer</SubType>
 	  </AvaloniaResource>
 	</ItemGroup>
