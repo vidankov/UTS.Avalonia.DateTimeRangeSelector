@@ -6,15 +6,18 @@
 
 ## [0.0.3] — 07.05.2026
 
+### Добавлено
+- `DateTimeRangeSelector` — TemplatedControl для выбора диапазона дат и времени со свойствами `FromDateTime`, `ToDateTime` (двусторонние), `Orientation` (Vertical/Horizontal) и базовой коэрцией (From <= To).
+- Тема `DateTimeRangeSelector` с привязкой дочерних `DateTimePickerPanel` через `Binding` для надёжной синхронизации значений.
+- `DateTimeRangeSelectorView` и `DateTimeRangeSelectorViewModel` с полноценной демонстрацией: установка начального диапазона, отображение выбранных значений и кнопка переключения ориентации.
+- В `DateTimePickerPanel` внутренние обновления `SelectedDateTime` переведены на `SetCurrentValue`, чтобы сохранять активные двусторонние привязки.
+- В `App.axaml` добавлен ресурс темы `DateTimeRangeSelector.axaml`.
+
 ### Изменено
 - Демонстрационное приложение переведено на навигацию с вкладками (`RoutedViewHost`).
 - Демонстрация `DateTimePickerPanel` вынесена в отдельную пару `DateTimePickerPanelView` / `DateTimePickerPanelViewModel`.
-- Главное окно заменено на `MainView` с элементами управления вкладками; `MainViewModel` теперь управляет маршрутизацией (`RoutingState`).
+- Главное окно заменено на `MainView` с управлением вкладками; `MainViewModel` управляет маршрутизацией (`RoutingState`).
 - В `App.axaml.cs` через `Locator` реализована регистрация зависимостей (ViewModels, Views).
-
-### Добавлено
-- Заготовка для демонстрации `DateTimeRangeSelector` — `DateTimeRangeSelectorView` и `DateTimeRangeSelectorViewModel`.
-- Базовая структура для будущих демонстраций: при добавлении нового контрола достаточно создать свою пару View/ViewModel, зарегистрировать её и добавить вкладку в `MainView`.
 
 ## [0.0.2] — 06.05.2026
 
