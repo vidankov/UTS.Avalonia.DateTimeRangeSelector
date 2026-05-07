@@ -1,72 +1,11 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:vm="using:UTS.DateTimeRangeSelector.DemoApp.ViewModels"
-		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-		xmlns:controls="clr-namespace:UTS.DateTimeRangeSelector.Controls;assembly=UTS.DateTimeRangeSelector"
-		mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-		x:Class="UTS.DateTimeRangeSelector.DemoApp.Views.MainWindow"
-		x:DataType="vm:MainWindowViewModel"
-		Icon="/Assets/avalonia-logo.ico"
-		Title="UTS.DateTimeRangeSelector.DemoApp">
-
-	<Design.DataContext>
-		<!-- This only sets the DataContext for the previewer in an IDE,
-		to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-		<vm:MainWindowViewModel/>
-	</Design.DataContext>
-
-	<ScrollViewer>
-		<StackPanel Margin="20" Spacing="15">
-			<TextBlock Text="Демонстрация DateTimePickerPanel" FontSize="20" FontWeight="Bold" />
-
-			<!-- 1. Без ограничений -->
-			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
-				<StackPanel Spacing="5">
-					<TextBlock Text="1. Без ограничений" FontWeight="Bold" />
-					<controls:DateTimePickerPanel SelectedDateTime="{Binding FreeDateTime, Mode=TwoWay}" />
-					<TextBlock Text="{Binding FreeDateTime, StringFormat='Выбрано: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
-					<Button Command="{Binding ChangeFreeDateTimeCommand}" Content="Установить +5 дней из ViewModel" />
-				</StackPanel>
-			</Border>
-
-			<!-- 2. С Min/Max (±7 дней) -->
-			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
-				<StackPanel Spacing="5">
-					<TextBlock Text="2. Ограничено ±7 дней от сегодня" FontWeight="Bold" />
-					<controls:DateTimePickerPanel SelectedDateTime="{Binding BoundedDateTime, Mode=TwoWay}"
-												  MinDateTime="{Binding BoundedMin}"
-												  MaxDateTime="{Binding BoundedMax}" />
-					<TextBlock Text="{Binding BoundedDateTime, StringFormat='Выбрано: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
-				</StackPanel>
-			</Border>
-
-			<!-- 3. Календарь отключён (Min == Max) -->
-			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
-				<StackPanel Spacing="5">
-					<TextBlock Text="3. Календарь отключён (Min == Max)" FontWeight="Bold" />
-					<controls:DateTimePickerPanel SelectedDateTime="{Binding DisabledCalendarDateTime, Mode=TwoWay}"
-												  MinDateTime="{Binding DisabledMin}"
-												  MaxDateTime="{Binding DisabledMax}" />
-					<TextBlock Text="{Binding DisabledCalendarDateTime, StringFormat='Выбрано: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
-				</StackPanel>
-			</Border>
-
-			<!-- 4. Динамическое изменение границ -->
-			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
-				<StackPanel Spacing="5">
-					<TextBlock Text="4. Динамические границы (можно менять)" FontWeight="Bold" />
-					<controls:DateTimePickerPanel SelectedDateTime="{Binding DynamicDateTime, Mode=TwoWay}"
-												  MinDateTime="{Binding DynamicMin}"
-												  MaxDateTime="{Binding DynamicMax}" />
-					<TextBlock Text="{Binding DynamicDateTime, StringFormat='Выбрано: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
-					<StackPanel Orientation="Horizontal" Spacing="5">
-						<Button Command="{Binding ChangeDynamicMinCommand}">Min +1 день</Button>
-						<Button Command="{Binding ChangeDynamicMaxCommand}">Max +1 день</Button>
-					</StackPanel>
-				</StackPanel>
-			</Border>
-		</StackPanel>
-	</ScrollViewer>
-
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:UTS.DateTimeRangeSelector.DemoApp.Views"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="UTS.DateTimeRangeSelector.DemoApp.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="UTS.DateTimeRangeSelector.DemoApp">
+    <views:MainView />
 </Window>

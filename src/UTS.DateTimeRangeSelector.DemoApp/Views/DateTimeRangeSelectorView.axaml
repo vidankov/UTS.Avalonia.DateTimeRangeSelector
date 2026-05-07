@@ -1,0 +1,27 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="using:UTS.DateTimeRangeSelector.DemoApp.ViewModels"
+			 xmlns:controls="clr-namespace:UTS.DateTimeRangeSelector.Controls;assembly=UTS.DateTimeRangeSelector"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="UTS.DateTimeRangeSelector.DemoApp.Views.DateTimeRangeSelectorView"
+			 x:DataType="vm:DateTimeRangeSelectorViewModel">
+
+	<Design.DataContext>
+		<vm:DateTimeRangeSelectorViewModel />
+	</Design.DataContext>
+
+	<ScrollViewer>
+		<StackPanel Margin="20" Spacing="15">
+			<TextBlock Text="Демонстрация DateTimeRangeSelector" FontSize="20" FontWeight="Bold" />
+			<!-- Здесь будет размещена демонстрация контрола DateTimeRangeSelector -->
+			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
+				<StackPanel Spacing="5">
+					<!-- <controls:DateTimeRangeSelector /> -->
+					<TextBlock Text="{Binding Message}" />
+				</StackPanel>
+			</Border>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

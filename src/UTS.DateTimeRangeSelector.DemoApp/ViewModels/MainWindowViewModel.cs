@@ -1,22 +1,48 @@
-﻿using ReactiveUI.SourceGenerators;
+﻿using ReactiveUI;
+using ReactiveUI.SourceGenerators;
+using Splat;
+using System.Reactive.Disposables.Fluent;
 
 namespace UTS.DateTimeRangeSelector.DemoApp.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainViewModel : ReactiveObject, IScreen, IActivatableViewModel
 {
-    [Reactive] private DateTime? _freeDateTime = DateTime.UtcNow;
-    [Reactive] private DateTime? _boundedDateTime = DateTime.UtcNow;
-    [Reactive] private DateTime? _disabledCalendarDateTime = DateTime.Today;
-    [Reactive] private DateTime? _dynamicDateTime = DateTime.UtcNow;
-    [Reactive] private DateTime _dynamicMin = DateTime.Today.AddDays(-7);
-    [Reactive] private DateTime _dynamicMax = DateTime.Today.AddDays(7).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
+    [Reactive] private bool _isDateTimePickerPanelActive;
+    [Reactive] private bool _isDateTimeRangeSelectorActive;
 
-    public DateTime BoundedMin => DateTime.Today.AddDays(-7);
-    public DateTime BoundedMax => DateTime.Today.AddDays(7).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
-    public DateTime DisabledMin => DateTime.Today;
-    public DateTime DisabledMax => DateTime.Today.AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
+    public RoutingState Router { get; } = new();
+    public ViewModelActivator Activator { get; } = new();
 
-    [ReactiveCommand] private void ChangeDynamicMin() => DynamicMin = DynamicMin.AddDays(1);
-    [ReactiveCommand] private void ChangeDynamicMax() => DynamicMax = DynamicMax.AddDays(1);
-    [ReactiveCommand] private void ChangeFreeDateTime() => FreeDateTime = DateTime.UtcNow.AddDays(5);
+    public MainViewModel()
+    {
+        Router.CurrentViewModel.Subscribe(UpdateTabsState);
+
+        this.WhenActivated(disposables =>
+        {
+            NavigateToDateTimePickerPanelCommand
+                .Execute()
+                .Subscribe()
+                .DisposeWith(disposables);
+        });
+    }
+
+    private void UpdateTabsState(IRoutableViewModel? viewModel)
+    {
+        IsDateTimePickerPanelActive = viewModel is DateTimePickerPanelViewModel;
+        IsDateTimeRangeSelectorActive = viewModel is DateTimeRangeSelectorViewModel;
+    }
+
+    [ReactiveCommand]
+    private IObservable<IRoutableViewModel> NavigateToDateTimePickerPanel()
+    {
+        var model = Locator.Current.GetService<DateTimePickerPanelViewModel>();
+        return Router.Navigate.Execute(model!);
+    }
+
+    [ReactiveCommand]
+    private IObservable<IRoutableViewModel> NavigateToDateTimeRangeSelector()
+    {
+        var model = Locator.Current.GetService<DateTimeRangeSelectorViewModel>();
+        return Router.Navigate.Execute(model!);
+    }
 }

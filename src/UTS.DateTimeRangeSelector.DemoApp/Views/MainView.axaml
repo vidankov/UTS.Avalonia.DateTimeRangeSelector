@@ -1,0 +1,79 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:rxui="http://reactiveui.net"
+             xmlns:vm="clr-namespace:UTS.DateTimeRangeSelector.DemoApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="UTS.DateTimeRangeSelector.DemoApp.Views.MainView"
+             x:DataType="vm:MainViewModel">
+<Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <Style Selector="Border.activeTab">
+            <Setter Property="Background" Value="{DynamicResource ThemeControlHighlightBrush}" />
+        </Style>
+        <Style Selector="Border.notActiveTab">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="Transparent"
+                BorderBrush="{DynamicResource ThemeBorderMidBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="0" Margin="10,0,0,0">
+                <Border x:Name="DateTimePickerPanelTab"
+                        CornerRadius="4,4,0,0"
+                        Classes.activeTab="{Binding IsDateTimePickerPanelActive}"
+                        Classes.notActiveTab="{Binding !IsDateTimePickerPanelActive}">
+                    <Button Content="🕒 DateTimePickerPanel"
+                            Command="{Binding NavigateToDateTimePickerPanelCommand}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="20,10"
+                            Cursor="Hand">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource ThemeControlHighlightBrush}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </Border>
+
+                <Border x:Name="DateTimeRangeSelectorTab"
+                        CornerRadius="4,4,0,0"
+                        Classes.activeTab="{Binding IsDateTimeRangeSelectorActive}"
+                        Classes.notActiveTab="{Binding !IsDateTimeRangeSelectorActive}">
+                    <Button Content="📅 DateTimeRangeSelector"
+                            Command="{Binding NavigateToDateTimeRangeSelectorCommand}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="20,10"
+                            Cursor="Hand">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource ThemeControlHighlightBrush}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource ThemeBorderMidBrush}"
+                BorderThickness="1,0,1,1"
+                Background="{DynamicResource ThemeBackgroundBrush}">
+            <rxui:RoutedViewHost Router="{Binding Router}" />
+        </Border>
+    </Grid>
+</UserControl>
