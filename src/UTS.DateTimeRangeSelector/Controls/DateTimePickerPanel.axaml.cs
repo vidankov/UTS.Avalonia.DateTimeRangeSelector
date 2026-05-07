@@ -5,6 +5,10 @@ using Avalonia.Data;
 
 namespace UTS.DateTimeRangeSelector.Controls;
 
+/// <summary>
+/// A TemplatedControl for selecting a single date and time value with optional minimum and maximum boundaries.
+/// Composes a CalendarDatePicker and multiple NumericUpDown controls for time components.
+/// </summary>
 public class DateTimePickerPanel : TemplatedControl
 {
     /// <summary>
@@ -85,7 +89,7 @@ public class DateTimePickerPanel : TemplatedControl
             {
                 if (value == null)
                 {
-                    SelectedDateTime = null;
+                    SetCurrentValue(SelectedDateTimeProperty, null);
                 }
                 else
                 {
@@ -263,7 +267,7 @@ public class DateTimePickerPanel : TemplatedControl
         try
         {
             var newDateTime = SelectedDate.Value.Date + new TimeSpan(0, Hour, Minute, Second, Millisecond);
-            SelectedDateTime = ClampToRange(newDateTime);
+            SetCurrentValue(SelectedDateTimeProperty, ClampToRange(newDateTime));
         }
         catch (ArgumentOutOfRangeException)
         {
