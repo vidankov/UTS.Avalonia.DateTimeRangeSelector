@@ -4,6 +4,18 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [0.0.3] — 07.05.2026
+
+### Изменено
+- Демонстрационное приложение переведено на навигацию с вкладками (`RoutedViewHost`).
+- Демонстрация `DateTimePickerPanel` вынесена в отдельную пару `DateTimePickerPanelView` / `DateTimePickerPanelViewModel`.
+- Главное окно заменено на `MainView` с элементами управления вкладками; `MainViewModel` теперь управляет маршрутизацией (`RoutingState`).
+- В `App.axaml.cs` через `Locator` реализована регистрация зависимостей (ViewModels, Views).
+
+### Добавлено
+- Заготовка для демонстрации `DateTimeRangeSelector` — `DateTimeRangeSelectorView` и `DateTimeRangeSelectorViewModel`.
+- Базовая структура для будущих демонстраций: при добавлении нового контрола достаточно создать свою пару View/ViewModel, зарегистрировать её и добавить вкладку в `MainView`.
+
 ## [0.0.2] — 06.05.2026
 
 ### Добавлено
