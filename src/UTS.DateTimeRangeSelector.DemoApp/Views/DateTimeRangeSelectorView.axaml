@@ -14,14 +14,25 @@
 
 	<ScrollViewer>
 		<StackPanel Margin="20" Spacing="15">
+
 			<TextBlock Text="Демонстрация DateTimeRangeSelector" FontSize="20" FontWeight="Bold" />
-			<!-- Здесь будет размещена демонстрация контрола DateTimeRangeSelector -->
+
 			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
 				<StackPanel Spacing="5">
-					<!-- <controls:DateTimeRangeSelector /> -->
-					<TextBlock Text="{Binding Message}" />
+					<Button Command="{Binding ToggleOrientationCommand}"
+							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"/>
+
+					<controls:DateTimeRangeSelector FromDateTime="{Binding RangeFrom, Mode=TwoWay}"
+													ToDateTime="{Binding RangeTo, Mode=TwoWay}"
+													Orientation="{Binding Orientation}"/>
+					
+					<TextBlock Text="{Binding RangeFrom, StringFormat='From: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
+					
+					<TextBlock Text="{Binding RangeTo, StringFormat='To: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
+
 				</StackPanel>
 			</Border>
+
 		</StackPanel>
 	</ScrollViewer>
 </UserControl>
