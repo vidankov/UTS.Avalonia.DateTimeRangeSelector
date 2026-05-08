@@ -12,9 +12,15 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
 
     [Reactive] private DateTime? _rangeFrom = DateTime.UtcNow.AddDays(-1);
     [Reactive] private DateTime? _rangeTo = DateTime.UtcNow.AddDays(1).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
+    [Reactive] private DateTime? _rangeMin = DateTime.UtcNow.Date.AddDays(-7);
+    [Reactive] private DateTime? _rangeMax = DateTime.UtcNow.Date.AddDays(7).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
     [Reactive] private Orientation _orientation = Orientation.Vertical;
 
     [ReactiveCommand] private void ToggleOrientation() =>
         Orientation = Orientation == Orientation.Vertical
             ? Orientation.Horizontal : Orientation.Vertical;
+    [ReactiveCommand] private void IncreaseMin() => RangeMin = RangeMin?.AddDays(1);
+    [ReactiveCommand] private void DecreaseMin() => RangeMin = RangeMin?.AddDays(-1);
+    [ReactiveCommand] private void IncreaseMax() => RangeMax = RangeMax?.AddDays(1);
+    [ReactiveCommand] private void DecreaseMax() => RangeMax = RangeMax?.AddDays(-1);
 }

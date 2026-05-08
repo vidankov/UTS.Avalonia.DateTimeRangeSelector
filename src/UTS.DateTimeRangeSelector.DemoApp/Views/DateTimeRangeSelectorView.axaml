@@ -18,18 +18,36 @@
 			<TextBlock Text="Демонстрация DateTimeRangeSelector" FontSize="20" FontWeight="Bold" />
 
 			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
-				<StackPanel Spacing="5">
+				<StackPanel Spacing="10">
+					<!-- Кнопки изменения границ -->
+					<StackPanel Orientation="Horizontal" Spacing="5">
+							<Button Command="{Binding IncreaseMinCommand}" Content="Min +1 день" />
+							<Button Command="{Binding DecreaseMinCommand}" Content="Min -1 день" />
+							<Button Command="{Binding IncreaseMaxCommand}" Content="Max +1 день" />
+							<Button Command="{Binding DecreaseMaxCommand}" Content="Max -1 день" />
+					</StackPanel>
+					<TextBlock Text="{Binding RangeMin, StringFormat='Min: {0:dd.MM.yyyy HH:mm}'}" />
+					<TextBlock Text="{Binding RangeMax, StringFormat='Max: {0:dd.MM.yyyy HH:mm}'}" />
+
+					<!-- Кнопка смены ориентации -->
 					<Button Command="{Binding ToggleOrientationCommand}"
 							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"/>
 
-					<controls:DateTimeRangeSelector FromDateTime="{Binding RangeFrom, Mode=TwoWay}"
+					<!-- Контрол -->
+					<controls:DateTimeRangeSelector x:Name="RangeSelector"
+													FromDateTime="{Binding RangeFrom, Mode=TwoWay}"
 													ToDateTime="{Binding RangeTo, Mode=TwoWay}"
-													Orientation="{Binding Orientation}"/>
-					
-					<TextBlock Text="{Binding RangeFrom, StringFormat='From: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
-					
-					<TextBlock Text="{Binding RangeTo, StringFormat='To: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
+													MinDateTime="{Binding RangeMin}"
+													MaxDateTime="{Binding RangeMax}"
+													Orientation="{Binding Orientation}" />
 
+					<!-- Валидация -->
+					<StackPanel Orientation="Horizontal" Spacing="5">
+						<TextBlock Text="Валиден:" FontWeight="SemiBold"/>
+						<TextBlock Text="{Binding #RangeSelector.IsValid}" />
+					</StackPanel>
+					<TextBlock Text="{Binding #RangeSelector.ValidationMessage}"
+							   Foreground="Red" FontWeight="SemiBold" />
 				</StackPanel>
 			</Border>
 
