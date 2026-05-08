@@ -22,7 +22,6 @@
 					<TextBlock Text="1. Без ограничений" FontWeight="Bold" />
 					<controls:DateTimePickerPanel SelectedDateTime="{Binding FreeDateTime, Mode=TwoWay}" />
 					<TextBlock Text="{Binding FreeDateTime, StringFormat='Выбрано: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
-					<Button Command="{Binding ChangeFreeDateTimeCommand}" Content="Установить +5 дней из ViewModel" />
 				</StackPanel>
 			</Border>
 

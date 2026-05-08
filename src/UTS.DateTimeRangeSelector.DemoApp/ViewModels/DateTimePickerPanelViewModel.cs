@@ -23,5 +23,4 @@ public partial class DateTimePickerPanelViewModel(IScreen hostScreen) : Reactive
 
     [ReactiveCommand] private void ChangeDynamicMin() => DynamicMin = DynamicMin.AddDays(1);
     [ReactiveCommand] private void ChangeDynamicMax() => DynamicMax = DynamicMax.AddDays(1);
-    [ReactiveCommand] private void ChangeFreeDateTime() => FreeDateTime = DateTime.UtcNow.AddDays(5);
 }
