@@ -28,7 +28,11 @@
 						<controls:DateTimePickerPanel x:Name="PART_FromPanel"
 													  SelectedDateTime="{Binding FromDateTime,
 																		 RelativeSource={RelativeSource TemplatedParent},
-																		 Mode=TwoWay}" />
+																		 Mode=TwoWay}"
+													  MinDateTime="{Binding MinDateTime,
+																	RelativeSource={RelativeSource TemplatedParent}}"
+													  MaxDateTime="{Binding MaxDateTime,
+																	RelativeSource={RelativeSource TemplatedParent}}"/>
 					</StackPanel>
 
 					<StackPanel Orientation="Vertical">
@@ -36,7 +40,11 @@
 						<controls:DateTimePickerPanel x:Name="PART_ToPanel"
 													  SelectedDateTime="{Binding ToDateTime,
 																		 RelativeSource={RelativeSource TemplatedParent},
-																		 Mode=TwoWay}" />
+																		 Mode=TwoWay}"
+													  MinDateTime="{Binding MinDateTime,
+																	RelativeSource={RelativeSource TemplatedParent}}"
+													  MaxDateTime="{Binding MaxDateTime,
+																	RelativeSource={RelativeSource TemplatedParent}}"/>
 					</StackPanel>
 
 				</StackPanel>

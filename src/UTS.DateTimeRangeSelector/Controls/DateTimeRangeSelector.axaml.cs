@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using UTS.DateTimeRangeSelector.Core;
 
 namespace UTS.DateTimeRangeSelector.Controls;
 
@@ -45,6 +46,40 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="MinDateTime"/> property.
+    /// </summary>
+    public static readonly StyledProperty<DateTime?> MinDateTimeProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
+            nameof(MinDateTime));
+
+    /// <summary>
+    /// Gets or sets the minimum allowed date and time for the range.
+    /// Null means no lower limit.
+    /// </summary>
+    public DateTime? MinDateTime
+    {
+        get => GetValue(MinDateTimeProperty);
+        set => SetValue(MinDateTimeProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MaxDateTime"/> property.
+    /// </summary>
+    public static readonly StyledProperty<DateTime?> MaxDateTimeProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
+            nameof(MaxDateTime));
+
+    /// <summary>
+    /// Gets or sets the maximum allowed date and time for the range.
+    /// Null means no upper limit.
+    /// </summary>
+    public DateTime? MaxDateTime
+    {
+        get => GetValue(MaxDateTimeProperty);
+        set => SetValue(MaxDateTimeProperty, value);
+    }
+
+    /// <summary>
     /// Defines the <see cref="Orientation"/> property.
     /// </summary>
     public static readonly StyledProperty<Avalonia.Layout.Orientation> OrientationProperty =
@@ -62,6 +97,38 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the read-only <see cref="IsValid"/> property.
+    /// </summary>
+    public static readonly DirectProperty<DateTimeRangeSelector, bool> IsValidProperty =
+        AvaloniaProperty.RegisterDirect<DateTimeRangeSelector, bool>(
+            nameof(IsValid), o => o.IsValid);
+
+    private bool _isValid;
+    /// <summary>Gets whether the current range is valid.</summary>
+    public bool IsValid
+    {
+        get => _isValid;
+        private set => SetAndRaise(IsValidProperty, ref _isValid, value);
+    }
+
+    /// <summary>
+    /// Defines the read-only <see cref="ValidationMessage"/> property.
+    /// </summary>
+    public static readonly DirectProperty<DateTimeRangeSelector, string?> ValidationMessageProperty =
+        AvaloniaProperty.RegisterDirect<DateTimeRangeSelector, string?>(
+            nameof(ValidationMessage), o => o.ValidationMessage);
+
+    private string? _validationMessage;
+    /// <summary>
+    /// Gets the validation error message, or null if the range is valid.
+    /// </summary>
+    public string? ValidationMessage
+    {
+        get => _validationMessage;
+        private set => SetAndRaise(ValidationMessageProperty, ref _validationMessage, value);
+    }
+
+    /// <summary>
     /// Prevents reentrancy when coercing From/To values.
     /// </summary>
     private bool _isCoercing;
@@ -76,40 +143,120 @@ public class DateTimeRangeSelector : TemplatedControl
             return;
         }
 
-        if (change.Property == FromDateTimeProperty || change.Property == ToDateTimeProperty)
+        if (change.Property == FromDateTimeProperty ||
+            change.Property == ToDateTimeProperty ||
+            change.Property == MinDateTimeProperty ||
+            change.Property == MaxDateTimeProperty)
         {
             Coerce(change.Property);
         }
     }
 
     /// <summary>
-    /// Ensures that <see cref="FromDateTime"/> is not greater than <see cref="ToDateTime"/>.
-    /// Called when either property changes. If the range becomes inverted, the unchanged
-    /// property is adjusted to match the changed one (From snaps To forward, or To snaps From backward).
+    /// Coerces the current <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to be 
+    /// within <see cref="MinDateTime"/>..<see cref="MaxDateTime"/> (clamping), 
+    /// normalizes them to UTC, and ensures <c>From &lt;= To</c>.
     /// </summary>
     /// <param name="property">The property that triggered the coercion.</param>
+    /// <remarks>
+    /// When the range becomes inverted after clamping, the unchanged property 
+    /// is adjusted to match the changed one (From pushes To forward, or To pulls From backward).
+    /// After coercion, <see cref="UpdateValidation"/> is called to refresh validation state.
+    /// </remarks>
     private void Coerce(AvaloniaProperty property)
     {
-        if (!FromDateTime.HasValue || !ToDateTime.HasValue || FromDateTime.Value <= ToDateTime.Value)
+        if (_isCoercing)
         {
             return;
         }
 
-        _isCoercing = true;
-        try
+        // 1. Нормализуем и клампим From/To к границам Min/Max
+        DateTime? from = ClampToBounds(FromDateTime);
+        DateTime? to = ClampToBounds(ToDateTime);
+
+        if (from != FromDateTime)
         {
-            if (property == FromDateTimeProperty)
+            SetCurrentValue(FromDateTimeProperty, from);
+        }
+        if (to != ToDateTime)
+        {
+            SetCurrentValue(ToDateTimeProperty, to);
+        }
+
+        // 2. Если после клампинга From > To – восстанавливаем порядок,
+        //    сохраняя намерение того свойства, которое изменилось.
+        if (from.HasValue && to.HasValue && from.Value > to.Value)
+        {
+            _isCoercing = true;
+            try
             {
-                SetCurrentValue(ToDateTimeProperty, FromDateTime.Value);
+                if (property == FromDateTimeProperty)
+                {
+                    SetCurrentValue(ToDateTimeProperty, from.Value);
+                }
+                else if (property == ToDateTimeProperty)
+                {
+                    SetCurrentValue(FromDateTimeProperty, to.Value);
+                }
+                else if (property == MinDateTimeProperty)
+                {
+                    SetCurrentValue(ToDateTimeProperty, from.Value);   // Min сдвинулся вправо → To подтягиваем
+                }
+                else if (property == MaxDateTimeProperty)
+                {
+                    SetCurrentValue(FromDateTimeProperty, to.Value);   // Max сдвинулся влево → From подтягиваем
+                }
+                else
+                {
+                    SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
+                }
             }
-            else if (property == ToDateTimeProperty)
+            finally
             {
-                SetCurrentValue(FromDateTimeProperty, ToDateTime.Value);
+                _isCoercing = false;
             }
         }
-        finally
+        UpdateValidation();
+    }
+
+    private DateTime? ClampToBounds(DateTime? value)
+    {
+        if (value is null)
         {
-            _isCoercing = false;
+            return null;
+        }
+        var dt = DateTimeNormalization.EnsureUtc(value.Value);
+        return DateTimeRangeCoercion.Clamp(dt, MinDateTime, MaxDateTime);
+    }
+
+    private void UpdateValidation()
+    {
+        if (!FromDateTime.HasValue || !ToDateTime.HasValue)
+        {
+            IsValid = false;
+            ValidationMessage = "Both From and To must be set.";
+        }
+        else if (MinDateTime.HasValue && MaxDateTime.HasValue && MinDateTime.Value > MaxDateTime.Value)
+        {
+            IsValid = false;
+            ValidationMessage = "MinDateTime cannot be greater than MaxDateTime.";
+        }
+        else if (FromDateTime.Value > ToDateTime.Value)
+        {
+            IsValid = false;
+            ValidationMessage = "From must be less than or equal to To.";
+        }
+        else if ((MinDateTime.HasValue && FromDateTime.Value < MinDateTime.Value) ||
+                 (MaxDateTime.HasValue && ToDateTime.Value > MaxDateTime.Value))
+        {
+            IsValid = false;
+            ValidationMessage = "Range exceeds allowed boundaries.";
+        }
+        else
+        {
+            IsValid = true;
+            ValidationMessage = null;
         }
     }
+
 }
