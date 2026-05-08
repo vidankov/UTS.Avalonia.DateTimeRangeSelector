@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		<Folder Include="Core\" />
 		<Folder Include="Events\" />
 		<Folder Include="Themes\" />
 	</ItemGroup>
