@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using UTS.DateTimeRangeSelector.Core;
 
 namespace UTS.DateTimeRangeSelector.Controls;
 
@@ -17,7 +18,8 @@ public class DateTimePickerPanel : TemplatedControl
     public static readonly StyledProperty<DateTime?> SelectedDateTimeProperty =
         AvaloniaProperty.Register<DateTimePickerPanel, DateTime?>(
             nameof(SelectedDateTime),
-            defaultBindingMode: BindingMode.TwoWay);
+            defaultBindingMode: BindingMode.TwoWay,
+            coerce: CoerceSelectedDateTime);
 
     /// <summary>
     /// Gets or sets the currently selected date and time (UTC).
@@ -33,7 +35,8 @@ public class DateTimePickerPanel : TemplatedControl
     /// </summary>
     public static readonly StyledProperty<DateTime?> MinDateTimeProperty =
         AvaloniaProperty.Register<DateTimePickerPanel, DateTime?>(
-            nameof(MinDateTime));
+            nameof(MinDateTime),
+            coerce: CoerceMinMaxDateTime);
 
     /// <summary>
     /// Gets or sets the minimum allowed date and time. Null means no lower limit.
@@ -49,7 +52,8 @@ public class DateTimePickerPanel : TemplatedControl
     /// </summary>
     public static readonly StyledProperty<DateTime?> MaxDateTimeProperty =
         AvaloniaProperty.Register<DateTimePickerPanel, DateTime?>(
-            nameof(MaxDateTime));
+            nameof(MaxDateTime),
+            coerce: CoerceMinMaxDateTime);
 
     /// <summary>
     /// Gets or sets the maximum allowed date and time. Null means no upper limit.
@@ -79,15 +83,33 @@ public class DateTimePickerPanel : TemplatedControl
         get => _selectedDate;
         set
         {
-            if (value == _selectedDate)
+            // Clamp to allowed date range (date part only)
+            DateTime? clampedValue = value;
+            if (clampedValue.HasValue)
+            {
+                var minDate = MinDateTime?.Date;
+                var maxDate = MaxDateTime?.Date;
+
+                if (minDate.HasValue && clampedValue.Value < minDate.Value)
+                {
+                    clampedValue = minDate.Value;
+                }
+                if (maxDate.HasValue && clampedValue.Value > maxDate.Value)
+                {
+                    clampedValue = maxDate.Value;
+                }
+            }
+
+            if (clampedValue == _selectedDate)
             {
                 return;
             }
-            SetAndRaise(SelectedDateProperty, ref _selectedDate, value);
+
+            SetAndRaise(SelectedDateProperty, ref _selectedDate, clampedValue);
 
             if (!_updatingComponents)
             {
-                if (value == null)
+                if (clampedValue == null)
                 {
                     SetCurrentValue(SelectedDateTimeProperty, null);
                 }
@@ -96,8 +118,12 @@ public class DateTimePickerPanel : TemplatedControl
                     UpdateSelectedDateTime();
                 }
             }
+
+            // Force calendar bounds reset in case the control altered them
+            ApplyMinMaxToCalendar();
         }
     }
+
 
     /// <summary>
     /// Defines the <see cref="Hour"/> property.
@@ -216,7 +242,22 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     private bool _updatingComponents;
-    private CalendarDatePicker? _calendar;
+    private ConstrainedCalendarDatePicker? _calendar;
+
+    /// <inheritdoc/>
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == SelectedDateTimeProperty)
+        {
+            OnSelectedDateTimeChanged(change.NewValue as DateTime?);
+        }
+        else if (change.Property == MinDateTimeProperty || change.Property == MaxDateTimeProperty)
+        {
+            CoerceValue(SelectedDateTimeProperty);
+            ApplyMinMaxToCalendar();
+        }
+    }
 
     /// <summary>
     /// Handles changes to <see cref="SelectedDateTime"/> and updates all time components and the date part.
@@ -249,6 +290,8 @@ public class DateTimePickerPanel : TemplatedControl
             SelectedDate = null;
         }
 
+        _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+
         _updatingComponents = false;
     }
 
@@ -267,7 +310,7 @@ public class DateTimePickerPanel : TemplatedControl
         try
         {
             var newDateTime = SelectedDate.Value.Date + new TimeSpan(0, Hour, Minute, Second, Millisecond);
-            SetCurrentValue(SelectedDateTimeProperty, ClampToRange(newDateTime));
+            SetCurrentValue(SelectedDateTimeProperty, newDateTime);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -276,35 +319,33 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
-    /// Clamps the provided DateTime to the Min/Max bounds if they are set.
+    /// Coerces a <see cref="DateTime"/> value assigned to <see cref="SelectedDateTime"/>.
+    /// Ensures the value is in UTC via <see cref="DateTimeNormalization.EnsureUtc"/>,
+    /// then clamps it to <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>.
     /// </summary>
-    /// <param name="dt">The DateTime value to clamp.</param>
-    /// <returns>A DateTime that lies within the defined boundaries.</returns>
-    private DateTime ClampToRange(DateTime dt)
+    /// <param name="sender">The <see cref="DateTimePickerPanel"/> instance.</param>
+    /// <param name="value">The incoming value to coerce, or null.</param>
+    /// <returns>The normalized and clamped UTC DateTime, or null.</returns>
+    private static DateTime? CoerceSelectedDateTime(AvaloniaObject sender, DateTime? value)
     {
-        if (MinDateTime.HasValue && dt < MinDateTime.Value)
+        if (value is null)
         {
-            dt = MinDateTime.Value;
+            return null;
         }
-        if (MaxDateTime.HasValue && dt > MaxDateTime.Value)
-        {
-            dt = MaxDateTime.Value;
-        }
-        return dt;
+
+        var dt = DateTimeNormalization.EnsureUtc(value.Value);
+        var panel = (DateTimePickerPanel)sender;
+        return DateTimeRangeCoercion.Clamp(dt, panel.MinDateTime, panel.MaxDateTime);
     }
 
-    /// <inheritdoc/>
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    /// <summary>Ensures Min/Max are stored as UTC.</summary>
+    private static DateTime? CoerceMinMaxDateTime(AvaloniaObject sender, DateTime? value)
     {
-        base.OnPropertyChanged(change);
-        if (change.Property == SelectedDateTimeProperty)
+        if (value is null)
         {
-            OnSelectedDateTimeChanged(change.NewValue as DateTime?);
+            return null;
         }
-        else if (change.Property == MinDateTimeProperty || change.Property == MaxDateTimeProperty)
-        {
-            ApplyMinMaxToCalendar();
-        }
+        return DateTimeNormalization.EnsureUtc(value.Value);
     }
 
     /// <summary>
@@ -324,7 +365,7 @@ public class DateTimePickerPanel : TemplatedControl
     {
         base.OnApplyTemplate(e);
 
-        _calendar = e.NameScope.Find<CalendarDatePicker>("PART_Calendar");
+        _calendar = e.NameScope.Find<ConstrainedCalendarDatePicker>("PART_Calendar");
 
         ApplyMinMaxToCalendar();
 
@@ -347,10 +388,6 @@ public class DateTimePickerPanel : TemplatedControl
 
         var min = MinDateTime?.Date;
         var max = MaxDateTime?.Date;
-        var hasLimits = min.HasValue && max.HasValue;
-
-        _calendar.DisplayDateStart = min;
-        _calendar.DisplayDateEnd = max;
-        _calendar.IsEnabled = !hasLimits || MinDateTime?.Date != MaxDateTime?.Date;
+        _calendar.IsEnabled = !(min.HasValue && max.HasValue && min.Value == max.Value);
     }
 }

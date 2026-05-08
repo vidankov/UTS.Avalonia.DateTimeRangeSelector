@@ -21,6 +21,11 @@
 
 	<converters:DecimalToIntConverter x:Key="DecimalToIntConverter" />
 
+	<ControlTheme x:Key="{x:Type controls:ConstrainedCalendarDatePicker}"
+				  TargetType="controls:ConstrainedCalendarDatePicker"
+				  BasedOn="{StaticResource {x:Type CalendarDatePicker}}">
+	</ControlTheme>
+
 	<ControlTheme x:Key="{x:Type controls:DateTimePickerPanel}" TargetType="controls:DateTimePickerPanel">
 		<Setter Property="Template">
 			<ControlTemplate>
@@ -28,52 +33,56 @@
 				<StackPanel Orientation="Horizontal">
 
 					<!-- Выбор даты -->
-					<CalendarDatePicker x:Name="PART_Calendar"
-										SelectedDate="{Binding SelectedDate,
+					<controls:ConstrainedCalendarDatePicker x:Name="PART_Calendar"
+													   SelectedDate="{Binding SelectedDate,
 													   RelativeSource={RelativeSource TemplatedParent},
 													   Mode=TwoWay}"
-										MinWidth="150" />
+													   MinDate="{Binding MinDateTime,
+													   RelativeSource={RelativeSource TemplatedParent}}"
+													   MaxDate="{Binding MaxDateTime,
+													   RelativeSource={RelativeSource TemplatedParent}}"
+													   MinWidth="150" />
 
 					<TextBlock Text=" - " VerticalAlignment="Center" Margin="5,0" />
 
 					<!-- Часы -->
 					<NumericUpDown Value="{Binding Hour,
-										   RelativeSource={RelativeSource TemplatedParent},
-										   Converter={StaticResource DecimalToIntConverter},
-										   Mode=TwoWay}"
-								   Minimum="0" Maximum="23" Increment="1" FormatString="00"
-								   MinWidth="110" HorizontalAlignment="Center"
-								   ButtonSpinnerLocation="Right" />
+					RelativeSource={RelativeSource TemplatedParent},
+					Converter={StaticResource DecimalToIntConverter},
+					Mode=TwoWay}"
+					Minimum="0" Maximum="23" Increment="1" FormatString="00"
+					MinWidth="110" HorizontalAlignment="Center"
+					ButtonSpinnerLocation="Right" />
 					<TextBlock Text="ч." VerticalAlignment="Center" Margin="2,0,5,0" />
 
 					<!-- Минуты -->
 					<NumericUpDown Value="{Binding Minute,
-										   RelativeSource={RelativeSource TemplatedParent},
-										   Converter={StaticResource DecimalToIntConverter},
-										   Mode=TwoWay}"
-								   Minimum="0" Maximum="59" Increment="1" FormatString="00"
-								   MinWidth="110" HorizontalAlignment="Center"
-								   ButtonSpinnerLocation="Right" />
+					RelativeSource={RelativeSource TemplatedParent},
+					Converter={StaticResource DecimalToIntConverter},
+					Mode=TwoWay}"
+					Minimum="0" Maximum="59" Increment="1" FormatString="00"
+					MinWidth="110" HorizontalAlignment="Center"
+					ButtonSpinnerLocation="Right" />
 					<TextBlock Text="мин." VerticalAlignment="Center" Margin="2,0,5,0" />
 
 					<!-- Секунды -->
 					<NumericUpDown Value="{Binding Second,
-										   RelativeSource={RelativeSource TemplatedParent},
-										   Converter={StaticResource DecimalToIntConverter},
-										   Mode=TwoWay}"
-								   Minimum="0" Maximum="59" Increment="1" FormatString="00"
-								   MinWidth="110" HorizontalAlignment="Center"
-								   ButtonSpinnerLocation="Right" />
+					RelativeSource={RelativeSource TemplatedParent},
+					Converter={StaticResource DecimalToIntConverter},
+					Mode=TwoWay}"
+					Minimum="0" Maximum="59" Increment="1" FormatString="00"
+					MinWidth="110" HorizontalAlignment="Center"
+					ButtonSpinnerLocation="Right" />
 					<TextBlock Text="сек." VerticalAlignment="Center" Margin="2,0,5,0" />
 
 					<!-- Миллисекунды -->
 					<NumericUpDown Value="{Binding Millisecond,
-										   RelativeSource={RelativeSource TemplatedParent},
-										   Converter={StaticResource DecimalToIntConverter},
-										   Mode=TwoWay}"
-								   Minimum="0" Maximum="999" Increment="10" FormatString="000"
-								   MinWidth="110" HorizontalAlignment="Center"
-								   ButtonSpinnerLocation="Right" />
+					RelativeSource={RelativeSource TemplatedParent},
+					Converter={StaticResource DecimalToIntConverter},
+					Mode=TwoWay}"
+					Minimum="0" Maximum="999" Increment="10" FormatString="000"
+					MinWidth="110" HorizontalAlignment="Center"
+					ButtonSpinnerLocation="Right" />
 					<TextBlock Text="мс." VerticalAlignment="Center" Margin="2,0,0,0" />
 
 				</StackPanel>
