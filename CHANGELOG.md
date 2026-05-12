@@ -4,6 +4,27 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [0.0.5] — 12.05.2026
+
+### Добавлено
+- Core-типы `DateTimeRange` (неизменяемый диапазон), `PresetItem` (пресет с меткой и длительностью), `ValidationResult` (результат валидации).
+- В `DateTimeRangeSelector`:
+  - Стилизуемые свойства `Presets` (список пресетов) и `ShowPresets` (видимость панели пресетов).
+  - CLR-свойство `TimeProvider` для получения текущего времени при применении пресетов и начального диапазона.
+  - Команда `ApplyPresetCommand` (внутренний класс `PresetCommand`), принимающая `TimeSpan` в качестве параметра.
+  - Логика пресетов: правый край определяется `MaxDateTime`, если он задан, иначе — `TimeProvider.GetUtcNow()`; левый край = правый − длительность, но не ранее `MinDateTime`.
+  - Логика начального диапазона по умолчанию согласована с пресетами: если `MaxDateTime` задан, `To = MaxDateTime` (иначе `Now`); `From = To - 1 час` с учётом `MinDateTime`.
+  - Защита от повторного применения значений по умолчанию через флаг `_defaultsApplied`.
+- В теме `DateTimeRangeSelector.axaml`:
+  - Панель пресетов: `ItemsControl` с `WrapPanel`, привязанный к `Presets` и `ShowPresets`.
+  - Кнопки пресетов с привязкой команды через `Binding` с `RelativeSource={RelativeSource FindAncestor}` к родительскому `DateTimeRangeSelector`.
+- В демо-приложении:
+  - В `DateTimeRangeSelectorViewModel` добавлены свойства `Presets` (три пресета, включая «За весь период») и `ShowPresets`, а также команда `ToggleShowPresets`.
+  - В `DateTimeRangeSelectorView` добавлены кнопка переключения видимости пресетов и привязки `Presets`, `ShowPresets` к контролу.
+
+### Изменено
+- В `DateTimeRangeSelector` метод `OnPropertyChanged` теперь вызывает `_applyPresetCommand.RaiseCanExecuteChanged()` при изменении `ShowPresets`, обеспечивая корректное обновление доступности кнопок пресетов.
+
 ## [0.0.4] — 08.05.2026
 
 ### Добавлено
