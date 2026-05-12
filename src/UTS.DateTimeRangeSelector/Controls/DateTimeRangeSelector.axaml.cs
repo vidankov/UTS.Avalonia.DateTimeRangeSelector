@@ -363,32 +363,56 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
-    /// Applies default values to <see cref="FromDateTime"/> and <see cref="ToDateTime"/>
-    /// based on <see cref="TimeProvider"/> if they have not been set by the consumer.
+    /// Applies sensible default values for <see cref="FromDateTime"/> and <see cref="ToDateTime"/>
+    /// based on available bounds (<see cref="MinDateTime"/>, <see cref="MaxDateTime"/>) 
+    /// and the current UTC time from <see cref="TimeProvider"/>.
+    /// 
+    /// The right edge (anchor) is <see cref="MaxDateTime"/> if set, otherwise the current UTC time.
+    /// The left edge is anchor minus 1 hour, but never earlier than <see cref="MinDateTime"/>.
+    /// If only one edge was set by the consumer, the missing edge is derived from the anchor.
     /// </summary>
     private void ApplyDefaultRange()
     {
-        // If both are already set, keep them.
         if (FromDateTime.HasValue && ToDateTime.HasValue)
         {
             return;
         }
 
-        var now = TimeProvider.GetUtcNow().UtcDateTime;
+        DateTime anchor = MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
 
         if (!FromDateTime.HasValue && !ToDateTime.HasValue)
         {
-            SetCurrentValue(FromDateTimeProperty, now.AddHours(-1));
-            SetCurrentValue(ToDateTimeProperty, now);
+            var from = anchor.AddHours(-1);
+            if (MinDateTime.HasValue && from < MinDateTime.Value)
+            {
+                from = MinDateTime.Value;
+            }
+
+            SetCurrentValue(FromDateTimeProperty, from);
+            SetCurrentValue(ToDateTimeProperty, anchor);
         }
         else if (FromDateTime.HasValue && !ToDateTime.HasValue)
         {
-            var to = FromDateTime.Value.AddHours(1);
+            var to = anchor;
+            if (to < FromDateTime.Value)
+            {
+                to = FromDateTime.Value;
+            }
+
             SetCurrentValue(ToDateTimeProperty, to);
         }
         else if (!FromDateTime.HasValue && ToDateTime.HasValue)
         {
-            var from = ToDateTime.Value.AddHours(-1);
+            var from = anchor.AddHours(-1);
+            if (MinDateTime.HasValue && from < MinDateTime.Value)
+            {
+                from = MinDateTime.Value;
+            }
+            if (from > ToDateTime.Value)
+            {
+                from = ToDateTime.Value;
+            }
+
             SetCurrentValue(FromDateTimeProperty, from);
         }
 
