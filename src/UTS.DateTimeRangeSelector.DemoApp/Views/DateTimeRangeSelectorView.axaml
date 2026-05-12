@@ -33,13 +33,19 @@
 					<Button Command="{Binding ToggleOrientationCommand}"
 							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"/>
 
+					<!-- Кнопка вкл/выкл пресеты -->
+					<Button Command="{Binding ToggleShowPresetsCommand}"
+							Content="Включить/выключить использование пресетов"/>
+
 					<!-- Контрол -->
 					<controls:DateTimeRangeSelector x:Name="RangeSelector"
 													FromDateTime="{Binding RangeFrom, Mode=TwoWay}"
 													ToDateTime="{Binding RangeTo, Mode=TwoWay}"
 													MinDateTime="{Binding RangeMin}"
 													MaxDateTime="{Binding RangeMax}"
-													Orientation="{Binding Orientation}" />
+													Orientation="{Binding Orientation}"
+													Presets="{Binding Presets}"
+													ShowPresets="{Binding ShowPresets}"/>
 
 					<!-- Валидация -->
 					<StackPanel Orientation="Horizontal" Spacing="5">
