@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using System.Windows.Input;
 using UTS.DateTimeRangeSelector.Core;
 
 namespace UTS.DateTimeRangeSelector.Controls;
@@ -97,6 +98,40 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="Presets"/> property.
+    /// </summary>
+    public static readonly StyledProperty<IReadOnlyList<PresetItem>> PresetsProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, IReadOnlyList<PresetItem>>(
+            nameof(Presets),
+            defaultValue: PresetItem.Defaults);
+
+    /// <summary>
+    /// Gets or sets the list of preset time ranges available for quick selection.
+    /// </summary>
+    public IReadOnlyList<PresetItem> Presets
+    {
+        get => GetValue(PresetsProperty);
+        set => SetValue(PresetsProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="ShowPresets"/> property.
+    /// </summary>
+    public static readonly StyledProperty<bool> ShowPresetsProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, bool>(
+            nameof(ShowPresets),
+            defaultValue: true);
+
+    /// <summary>
+    /// Gets or sets whether the preset buttons panel is visible.
+    /// </summary>
+    public bool ShowPresets
+    {
+        get => GetValue(ShowPresetsProperty);
+        set => SetValue(ShowPresetsProperty, value);
+    }
+
+    /// <summary>
     /// Defines the read-only <see cref="IsValid"/> property.
     /// </summary>
     public static readonly DirectProperty<DateTimeRangeSelector, bool> IsValidProperty =
@@ -129,6 +164,55 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Gets or sets the <see cref="System.TimeProvider"/> used to obtain the current UTC time
+    /// when applying presets or initializing the default range.
+    /// </summary>
+    /// <remarks>
+    /// Must be set before the control is fully loaded to take effect during initialization.
+    /// </remarks>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
+
+    /// <summary>
+    /// Defines the <see cref="ApplyPresetCommand"/> property.
+    /// </summary>
+    public static readonly DirectProperty<DateTimeRangeSelector, ICommand> ApplyPresetCommandProperty =
+        AvaloniaProperty.RegisterDirect<DateTimeRangeSelector, ICommand>(
+            nameof(ApplyPresetCommand),
+            o => o.ApplyPresetCommand);
+
+    private PresetCommand _applyPresetCommand;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DateTimeRangeSelector"/> class.
+    /// </summary>
+    public DateTimeRangeSelector()
+    {
+        _applyPresetCommand = new PresetCommand(
+            execute: duration =>
+            {
+                DateTime end = MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
+                DateTime start = end - duration;
+
+                if (MinDateTime.HasValue && start < MinDateTime.Value)
+                {
+                    start = MinDateTime.Value;
+                }
+
+                SetCurrentValue(FromDateTimeProperty, start);
+                SetCurrentValue(ToDateTimeProperty, end);
+
+                Coerce(FromDateTimeProperty);
+            },
+            canExecute: () => ShowPresets
+        );
+    }
+
+    /// <summary>
+    /// Gets the command that applies a preset duration to the range.
+    /// </summary>
+    public ICommand ApplyPresetCommand => _applyPresetCommand;
+
+    /// <summary>
     /// Prevents reentrancy when coercing From/To values.
     /// </summary>
     private bool _isCoercing;
@@ -141,6 +225,11 @@ public class DateTimeRangeSelector : TemplatedControl
         if (_isCoercing)
         {
             return;
+        }
+
+        if (change.Property == ShowPresetsProperty)
+        {
+            _applyPresetCommand.RaiseCanExecuteChanged();
         }
 
         if (change.Property == FromDateTimeProperty ||
@@ -259,4 +348,79 @@ public class DateTimeRangeSelector : TemplatedControl
         }
     }
 
+    private bool _defaultsApplied;
+
+    /// <inheritdoc/>
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+
+        if (!_defaultsApplied)
+        {
+            ApplyDefaultRange();
+            _defaultsApplied = true;
+        }
+    }
+
+    /// <summary>
+    /// Applies default values to <see cref="FromDateTime"/> and <see cref="ToDateTime"/>
+    /// based on <see cref="TimeProvider"/> if they have not been set by the consumer.
+    /// </summary>
+    private void ApplyDefaultRange()
+    {
+        // If both are already set, keep them.
+        if (FromDateTime.HasValue && ToDateTime.HasValue)
+        {
+            return;
+        }
+
+        var now = TimeProvider.GetUtcNow().UtcDateTime;
+
+        if (!FromDateTime.HasValue && !ToDateTime.HasValue)
+        {
+            SetCurrentValue(FromDateTimeProperty, now.AddHours(-1));
+            SetCurrentValue(ToDateTimeProperty, now);
+        }
+        else if (FromDateTime.HasValue && !ToDateTime.HasValue)
+        {
+            var to = FromDateTime.Value.AddHours(1);
+            SetCurrentValue(ToDateTimeProperty, to);
+        }
+        else if (!FromDateTime.HasValue && ToDateTime.HasValue)
+        {
+            var from = ToDateTime.Value.AddHours(-1);
+            SetCurrentValue(FromDateTimeProperty, from);
+        }
+
+        Coerce(FromDateTimeProperty);
+    }
+}
+
+/// <summary>
+/// A simple reusable command implementation for preset execution.
+/// </summary>
+internal class PresetCommand : ICommand
+{
+    private readonly Action<TimeSpan> _execute;
+    private readonly Func<bool> _canExecute;
+
+    public PresetCommand(Action<TimeSpan> execute, Func<bool> canExecute)
+    {
+        _execute = execute;
+        _canExecute = canExecute;
+    }
+
+    public event EventHandler? CanExecuteChanged;
+
+    public bool CanExecute(object? parameter) => _canExecute() && parameter is TimeSpan;
+
+    public void Execute(object? parameter)
+    {
+        if (parameter is TimeSpan duration)
+        {
+            _execute(duration);
+        }
+    }
+
+    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }

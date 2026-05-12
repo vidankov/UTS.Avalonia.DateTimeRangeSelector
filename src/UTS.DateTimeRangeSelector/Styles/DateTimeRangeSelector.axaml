@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
 					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-					xmlns:controls="using:UTS.DateTimeRangeSelector.Controls">
+					xmlns:controls="using:UTS.DateTimeRangeSelector.Controls"
+					xmlns:core="using:UTS.DateTimeRangeSelector.Core">
 
 	<!--
 	Additional resources
@@ -21,30 +22,55 @@
 	<ControlTheme x:Key="{x:Type controls:DateTimeRangeSelector}" TargetType="controls:DateTimeRangeSelector">
 		<Setter Property="Template">
 			<ControlTemplate>
-				<StackPanel Orientation="{TemplateBinding Orientation}" Spacing="15">
+				<StackPanel Orientation="Vertical" Spacing="15">
 
-					<StackPanel Orientation="Vertical">
-						<TextBlock Text="From:" FontWeight="SemiBold" Margin="0,0,0,5" />
-						<controls:DateTimePickerPanel x:Name="PART_FromPanel"
-													  SelectedDateTime="{Binding FromDateTime,
-																		 RelativeSource={RelativeSource TemplatedParent},
-																		 Mode=TwoWay}"
-													  MinDateTime="{Binding MinDateTime,
-																	RelativeSource={RelativeSource TemplatedParent}}"
-													  MaxDateTime="{Binding MaxDateTime,
-																	RelativeSource={RelativeSource TemplatedParent}}"/>
-					</StackPanel>
+					<!-- Пресеты -->
+					<ItemsControl ItemsSource="{TemplateBinding Presets}"
+								  IsVisible="{TemplateBinding ShowPresets}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate DataType="core:PresetItem">
+								<Button Content="{Binding Label}"
+										Command="{Binding ApplyPresetCommand,
+										RelativeSource={RelativeSource FindAncestor,
+										AncestorType=controls:DateTimeRangeSelector}}"
+										CommandParameter="{Binding Duration}"
+										Margin="2" Padding="6,4" />
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
 
-					<StackPanel Orientation="Vertical">
-						<TextBlock Text="To:" FontWeight="SemiBold" Margin="0,0,0,5" />
-						<controls:DateTimePickerPanel x:Name="PART_ToPanel"
-													  SelectedDateTime="{Binding ToDateTime,
-																		 RelativeSource={RelativeSource TemplatedParent},
-																		 Mode=TwoWay}"
-													  MinDateTime="{Binding MinDateTime,
-																	RelativeSource={RelativeSource TemplatedParent}}"
-													  MaxDateTime="{Binding MaxDateTime,
-																	RelativeSource={RelativeSource TemplatedParent}}"/>
+					<!-- Основной макет -->
+					<StackPanel Orientation="{TemplateBinding Orientation}" Spacing="15">
+
+						<StackPanel Orientation="Vertical">
+							<TextBlock Text="From:" FontWeight="SemiBold" Margin="0,0,0,5" />
+							<controls:DateTimePickerPanel x:Name="PART_FromPanel"
+														  SelectedDateTime="{Binding FromDateTime,
+																			 RelativeSource={RelativeSource TemplatedParent},
+																			 Mode=TwoWay}"
+														  MinDateTime="{Binding MinDateTime,
+																		RelativeSource={RelativeSource TemplatedParent}}"
+														  MaxDateTime="{Binding MaxDateTime,
+																		RelativeSource={RelativeSource TemplatedParent}}"/>
+						</StackPanel>
+
+						<StackPanel Orientation="Vertical">
+							<TextBlock Text="To:" FontWeight="SemiBold" Margin="0,0,0,5" />
+							<controls:DateTimePickerPanel x:Name="PART_ToPanel"
+														  SelectedDateTime="{Binding ToDateTime,
+																			 RelativeSource={RelativeSource TemplatedParent},
+																			 Mode=TwoWay}"
+														  MinDateTime="{Binding MinDateTime,
+																		RelativeSource={RelativeSource TemplatedParent}}"
+														  MaxDateTime="{Binding MaxDateTime,
+																		RelativeSource={RelativeSource TemplatedParent}}"/>
+						</StackPanel>
+
 					</StackPanel>
 
 				</StackPanel>
