@@ -190,21 +190,37 @@ public class DateTimeRangeSelector : TemplatedControl
         _applyPresetCommand = new PresetCommand(
             execute: duration =>
             {
-                DateTime end = MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
-                DateTime start = end - duration;
-
-                if (MinDateTime.HasValue && start < MinDateTime.Value)
-                {
-                    start = MinDateTime.Value;
-                }
-
+                var (start, end) = CalculateRangeFromAnchor(duration);
                 SetCurrentValue(FromDateTimeProperty, start);
                 SetCurrentValue(ToDateTimeProperty, end);
-
                 Coerce(FromDateTimeProperty);
             },
             canExecute: () => ShowPresets
         );
+    }
+
+    /// <summary>
+    /// Returns the anchor (right edge) used for range calculations.
+    /// If <see cref="MaxDateTime"/> is set, it is the anchor;
+    /// otherwise, the current UTC time from <see cref="TimeProvider"/>.
+    /// </summary>
+    private DateTime GetAnchor() => MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
+
+    /// <summary>
+    /// Calculates a time range of the given <paramref name="duration"/> ending at the anchor.
+    /// The start is clamped to <see cref="MinDateTime"/> if a lower bound exists.
+    /// </summary>
+    /// <param name="duration">The length of the range (positive).</param>
+    /// <returns>A tuple containing the calculated (start, end) values in UTC.</returns>
+    private (DateTime start, DateTime end) CalculateRangeFromAnchor(TimeSpan duration)
+    {
+        var end = GetAnchor();
+        var start = end - duration;
+        if (MinDateTime.HasValue && start < MinDateTime.Value)
+        {
+            start = MinDateTime.Value;
+        }
+        return (start, end);
     }
 
     /// <summary>
@@ -378,37 +394,32 @@ public class DateTimeRangeSelector : TemplatedControl
             return;
         }
 
-        DateTime anchor = MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
+        var anchor = GetAnchor();
+        var defaultDuration = TimeSpan.FromHours(1);
 
         if (!FromDateTime.HasValue && !ToDateTime.HasValue)
         {
-            var from = anchor.AddHours(-1);
-            if (MinDateTime.HasValue && from < MinDateTime.Value)
-            {
-                from = MinDateTime.Value;
-            }
-
-            SetCurrentValue(FromDateTimeProperty, from);
-            SetCurrentValue(ToDateTimeProperty, anchor);
+            var (start, end) = CalculateRangeFromAnchor(defaultDuration);
+            SetCurrentValue(FromDateTimeProperty, start);
+            SetCurrentValue(ToDateTimeProperty, end);
         }
-        else if (FromDateTime.HasValue && !ToDateTime.HasValue)
+        else if (FromDateTime.HasValue)
         {
             var to = anchor;
             if (to < FromDateTime.Value)
             {
                 to = FromDateTime.Value;
             }
-
             SetCurrentValue(ToDateTimeProperty, to);
         }
-        else if (!FromDateTime.HasValue && ToDateTime.HasValue)
+        else
         {
-            var from = anchor.AddHours(-1);
+            var from = anchor - defaultDuration;
             if (MinDateTime.HasValue && from < MinDateTime.Value)
             {
                 from = MinDateTime.Value;
             }
-            if (from > ToDateTime.Value)
+            if (from > ToDateTime!.Value)
             {
                 from = ToDateTime.Value;
             }
