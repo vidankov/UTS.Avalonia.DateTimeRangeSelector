@@ -4,6 +4,20 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [0.0.7] — 14.05.2026
+
+### Добавлено
+- Единая точка входа для стилей библиотеки — `DateTimeRangeSelectorTheme` (наследник `Styles`).
+  - Загружает все темы контролов через `ResourceDictionary.MergedDictionaries`.
+  - Подключается в `Application.Styles` одной строкой.
+- Документирование именованных частей шаблона:
+  - `DateTimePickerPanel`: `[TemplatePart("PART_Calendar", typeof(ConstrainedCalendarDatePicker))]`.
+  - `DateTimeRangeSelector`: `[TemplatePart("PART_FromPanel", typeof(DateTimePickerPanel))]`, `[TemplatePart("PART_ToPanel", typeof(DateTimePickerPanel))]`.
+
+### Изменено
+- Файлы тем `DateTimePickerPanel.axaml` и `DateTimeRangeSelector.axaml` преобразованы в `ResourceDictionary` и автоматически подхватываются через `DateTimeRangeSelectorTheme`.
+- Демо-приложение использует `<themes:DateTimeRangeSelectorTheme />` вместо отдельных `ResourceInclude`.
+
 ## [0.0.6] — 14.05.2026
 
 ### Добавлено
