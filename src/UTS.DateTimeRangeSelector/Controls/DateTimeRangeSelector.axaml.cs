@@ -2,6 +2,8 @@
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Windows.Input;
 using UTS.DateTimeRangeSelector.Core;
 using UTS.DateTimeRangeSelector.Events;
@@ -14,6 +16,9 @@ namespace UTS.DateTimeRangeSelector.Controls;
 /// </summary>
 public class DateTimeRangeSelector : TemplatedControl
 {
+    private readonly BehaviorSubject<DateTimeRange> _rangeSubject;
+    private readonly BehaviorSubject<ValidationResult> _validationSubject;
+
     /// <summary>
     /// Defines the <see cref="FromDateTime"/> property.
     /// </summary>
@@ -215,6 +220,22 @@ public class DateTimeRangeSelector : TemplatedControl
     private PresetCommand _applyPresetCommand;
 
     /// <summary>
+    /// Gets an observable sequence of <see cref="DateTimeRange"/> values representing
+    /// the current range. The observable is hot and replays the latest value to new subscribers.
+    /// Changes are distinct (no consecutive duplicates).
+    /// </summary>
+    public IObservable<DateTimeRange> RangeChanges =>
+        _rangeSubject.AsObservable().DistinctUntilChanged();
+
+    /// <summary>
+    /// Gets an observable sequence of <see cref="ValidationResult"/> values representing
+    /// the current validation state. The observable is hot and replays the latest value.
+    /// Changes are distinct (no consecutive duplicates).
+    /// </summary>
+    public IObservable<ValidationResult> ValidationChanges =>
+        _validationSubject.AsObservable().DistinctUntilChanged();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="DateTimeRangeSelector"/> class.
     /// </summary>
     public DateTimeRangeSelector()
@@ -244,15 +265,20 @@ public class DateTimeRangeSelector : TemplatedControl
                 {
                     RaiseEvent(new DateTimeRangeChangedEventArgs(
                         RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+                    _rangeSubject?.OnNext(new (FromDateTime, ToDateTime));
                 }
                 if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
                 {
                     RaiseEvent(new ValidationChangedEventArgs(
                         ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+                    _validationSubject?.OnNext(new (IsValid, ValidationMessage));
                 }
             },
             canExecute: () => ShowPresets
         );
+
+        _rangeSubject = new (new (FromDateTime, ToDateTime));
+        _validationSubject = new (new (IsValid, ValidationMessage));
     }
 
     /// <summary>
@@ -341,12 +367,14 @@ public class DateTimeRangeSelector : TemplatedControl
                 {
                     RaiseEvent(new DateTimeRangeChangedEventArgs(
                         RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+                    _rangeSubject.OnNext(new (FromDateTime, ToDateTime));
                 }
 
                 if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
                 {
                     RaiseEvent(new ValidationChangedEventArgs(
                         ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+                    _validationSubject.OnNext(new (IsValid, ValidationMessage));
                 }
             }
             else
@@ -556,11 +584,13 @@ public class DateTimeRangeSelector : TemplatedControl
         {
             RaiseEvent(new DateTimeRangeChangedEventArgs(
                 RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+            _rangeSubject.OnNext(new (FromDateTime, ToDateTime));
         }
         if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
         {
             RaiseEvent(new ValidationChangedEventArgs(
                 ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+            _validationSubject.OnNext(new (IsValid, ValidationMessage));
         }
     }
 }
