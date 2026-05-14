@@ -243,42 +243,143 @@ public class DateTimeRangeSelector : TemplatedControl
         _applyPresetCommand = new PresetCommand(
             execute: duration =>
             {
-                var oldFrom = FromDateTime;
-                var oldTo = ToDateTime;
-                var oldIsValid = IsValid;
-                var oldValidationMessage = ValidationMessage;
-
-                _suppressEvents = true;
-                try
-                {
-                    var (start, end) = CalculateRangeFromAnchor(duration);
-                    SetCurrentValue(FromDateTimeProperty, start);
-                    SetCurrentValue(ToDateTimeProperty, end);
-                    Coerce(FromDateTimeProperty);
-                }
-                finally
-                {
-                    _suppressEvents = false;
-                }
-
-                if (oldFrom != FromDateTime || oldTo != ToDateTime)
-                {
-                    RaiseEvent(new DateTimeRangeChangedEventArgs(
-                        RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
-                    _rangeSubject?.OnNext(new (FromDateTime, ToDateTime));
-                }
-                if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
-                {
-                    RaiseEvent(new ValidationChangedEventArgs(
-                        ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
-                    _validationSubject?.OnNext(new (IsValid, ValidationMessage));
-                }
+                ApplyRangeChange(
+                    action: () =>
+                    {
+                        var (start, end) = CalculateRangeFromAnchor(duration);
+                        SetCurrentValue(FromDateTimeProperty, start);
+                        SetCurrentValue(ToDateTimeProperty, end);
+                        Coerce(FromDateTimeProperty);
+                    },
+                    oldFrom: FromDateTime,
+                    oldTo: ToDateTime,
+                    oldIsValid: IsValid,
+                    oldValidationMessage: ValidationMessage
+                );
             },
             canExecute: () => ShowPresets
         );
 
-        _rangeSubject = new (new (FromDateTime, ToDateTime));
-        _validationSubject = new (new (IsValid, ValidationMessage));
+        _rangeSubject = new(new(FromDateTime, ToDateTime));
+        _validationSubject = new(new(IsValid, ValidationMessage));
+    }
+
+    /// <summary>
+    /// Programmatically sets both <see cref="FromDateTime"/> and <see cref="ToDateTime"/> in one atomic operation.
+    /// Values are normalized to UTC, clamped to <see cref="MinDateTime"/>/<see cref="MaxDateTime"/>,
+    /// and the range order is enforced.
+    /// </summary>
+    /// <param name="from">The desired start of the range. Null clears the value.</param>
+    /// <param name="to">The desired end of the range. Null clears the value.</param>
+    public void SetRange(DateTime? from, DateTime? to)
+    {
+        ApplyRangeChange(
+            action: () =>
+            {
+                SetCurrentValue(FromDateTimeProperty, from);
+                SetCurrentValue(ToDateTimeProperty, to);
+                Coerce(FromDateTimeProperty);
+            },
+            oldFrom: FromDateTime,
+            oldTo: ToDateTime,
+            oldIsValid: IsValid,
+            oldValidationMessage: ValidationMessage
+        );
+    }
+
+    /// <summary>
+    /// Applies a preset duration to the range, using the same logic as the preset command.
+    /// The range end is <see cref="MaxDateTime"/> if set, otherwise the current UTC time.
+    /// The range start is end - <paramref name="duration"/>, clamped to <see cref="MinDateTime"/>.
+    /// </summary>
+    /// <param name="duration">A positive <see cref="TimeSpan"/> representing the desired range length.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="duration"/> is zero or negative.</exception>
+    public void ApplyPreset(TimeSpan duration)
+    {
+        if (duration <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(duration), "Duration must be positive.");
+        }
+
+        ApplyRangeChange(
+            action: () =>
+            {
+                var (start, end) = CalculateRangeFromAnchor(duration);
+                SetCurrentValue(FromDateTimeProperty, start);
+                SetCurrentValue(ToDateTimeProperty, end);
+                Coerce(FromDateTimeProperty);
+            },
+            oldFrom: FromDateTime,
+            oldTo: ToDateTime,
+            oldIsValid: IsValid,
+            oldValidationMessage: ValidationMessage
+        );
+    }
+
+    /// <summary>
+    /// Resets <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to their default values,
+    /// as if the control was just initialized. <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>
+    /// are left unchanged.
+    /// </summary>
+    public void ResetToDefaults()
+    {
+        ApplyRangeChange(
+            action: () =>
+            {
+                ClearValue(FromDateTimeProperty);
+                ClearValue(ToDateTimeProperty);
+                ApplyDefaultRange();
+            },
+            oldFrom: FromDateTime,
+            oldTo: ToDateTime,
+            oldIsValid: IsValid,
+            oldValidationMessage: ValidationMessage
+        );
+    }
+
+    /// <summary>
+    /// Executes <paramref name="action"/> atomically, suppressing recursive event generation.
+    /// Compares the range and validation state before and after the action, and raises
+    /// <see cref="RangeChanged"/> / <see cref="ValidationChanged"/> along with updating the
+    /// reactive subjects if changes occurred.
+    /// </summary>
+    private void ApplyRangeChange(
+        Action action,
+        DateTime? oldFrom,
+        DateTime? oldTo,
+        bool oldIsValid,
+        string? oldValidationMessage)
+    {
+        if (_suppressEvents)
+        {
+            action();
+            return;
+        }
+
+        bool oldSuppress = _suppressEvents;
+        _suppressEvents = true;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            _suppressEvents = oldSuppress;
+        }
+
+        if (oldFrom != FromDateTime || oldTo != ToDateTime)
+        {
+            RaiseEvent(new DateTimeRangeChangedEventArgs(
+                RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+            _rangeSubject?.OnNext(new(FromDateTime, ToDateTime));
+        }
+
+        if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
+        {
+            RaiseEvent(new ValidationChangedEventArgs(
+                ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+            _validationSubject?.OnNext(new(IsValid, ValidationMessage));
+        }
     }
 
     /// <summary>
@@ -322,11 +423,6 @@ public class DateTimeRangeSelector : TemplatedControl
     {
         base.OnPropertyChanged(change);
 
-        if (_isCoercing)
-        {
-            return;
-        }
-
         if (change.Property == ShowPresetsProperty)
         {
             _applyPresetCommand.RaiseCanExecuteChanged();
@@ -337,64 +433,45 @@ public class DateTimeRangeSelector : TemplatedControl
             change.Property == MinDateTimeProperty ||
             change.Property == MaxDateTimeProperty)
         {
-            if (!_suppressEvents)
+            DateTime? oldFrom, oldTo;
+
+            if (change.Property == FromDateTimeProperty)
             {
-                DateTime? oldFrom;
-                DateTime? oldTo;
-
-                if (change.Property == FromDateTimeProperty)
-                {
-                    oldFrom = change.GetOldValue<DateTime?>();
-                    oldTo = ToDateTime;
-                }
-                else if (change.Property == ToDateTimeProperty)
-                {
-                    oldFrom = FromDateTime;
-                    oldTo = change.GetOldValue<DateTime?>();
-                }
-                else // MinDateTime or MaxDateTime
-                {
-                    oldFrom = FromDateTime;
-                    oldTo = ToDateTime;
-                }
-
-                bool oldIsValid = IsValid;
-                string? oldValidationMessage = ValidationMessage;
-
-                Coerce(change.Property);
-
-                if (oldFrom != FromDateTime || oldTo != ToDateTime)
-                {
-                    RaiseEvent(new DateTimeRangeChangedEventArgs(
-                        RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
-                    _rangeSubject.OnNext(new (FromDateTime, ToDateTime));
-                }
-
-                if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
-                {
-                    RaiseEvent(new ValidationChangedEventArgs(
-                        ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
-                    _validationSubject.OnNext(new (IsValid, ValidationMessage));
-                }
+                oldFrom = change.GetOldValue<DateTime?>();
+                oldTo = ToDateTime;
             }
-            else
+            else if (change.Property == ToDateTimeProperty)
             {
-                Coerce(change.Property);
+                oldFrom = FromDateTime;
+                oldTo = change.GetOldValue<DateTime?>();
             }
+            else // MinDateTime or MaxDateTime changes
+            {
+                oldFrom = FromDateTime;
+                oldTo = ToDateTime;
+            }
+
+            bool oldIsValid = IsValid;
+            string? oldValidationMessage = ValidationMessage;
+
+            ApplyRangeChange(
+                action: () => Coerce(change.Property),
+                oldFrom: oldFrom,
+                oldTo: oldTo,
+                oldIsValid: oldIsValid,
+                oldValidationMessage: oldValidationMessage
+            );
         }
     }
 
     /// <summary>
-    /// Coerces the current <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to be 
-    /// within <see cref="MinDateTime"/>..<see cref="MaxDateTime"/> (clamping), 
-    /// normalizes them to UTC, and ensures <c>From &lt;= To</c>.
+    /// Normalizes <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to UTC,
+    /// clamps them to <see cref="MinDateTime"/> / <see cref="MaxDateTime"/>,
+    /// and ensures <c>From &lt;= To</c> by adjusting the opposite boundary when the range becomes inverted.
+    /// Calls <see cref="UpdateValidation"/> after enforcement.
     /// </summary>
-    /// <param name="property">The property that triggered the coercion.</param>
-    /// <remarks>
-    /// When the range becomes inverted after clamping, the unchanged property 
-    /// is adjusted to match the changed one (From pushes To forward, or To pulls From backward).
-    /// After coercion, <see cref="UpdateValidation"/> is called to refresh validation state.
-    /// </remarks>
+    /// <param name="property">The property that triggered the coercion, used to preserve intent
+    /// when restoring the order.</param>
     private void Coerce(AvaloniaProperty property)
     {
         if (_isCoercing)
@@ -402,62 +479,53 @@ public class DateTimeRangeSelector : TemplatedControl
             return;
         }
 
-        bool oldSuppress = _suppressEvents;
-        _suppressEvents = true;
-        try
+        // 1. Нормализуем и клампим From/To к границам Min/Max
+        DateTime? from = ClampToBounds(FromDateTime);
+        DateTime? to = ClampToBounds(ToDateTime);
+
+        if (from != FromDateTime)
         {
-            // 1. Нормализуем и клампим From/To к границам Min/Max
-            DateTime? from = ClampToBounds(FromDateTime);
-            DateTime? to = ClampToBounds(ToDateTime);
+            SetCurrentValue(FromDateTimeProperty, from);
+        }
+        if (to != ToDateTime)
+        {
+            SetCurrentValue(ToDateTimeProperty, to);
+        }
 
-            if (from != FromDateTime)
+        // 2. Если после клампинга From > To – восстанавливаем порядок,
+        //    сохраняя намерение того свойства, которое изменилось.
+        if (from.HasValue && to.HasValue && from.Value > to.Value)
+        {
+            _isCoercing = true;
+            try
             {
-                SetCurrentValue(FromDateTimeProperty, from);
-            }
-            if (to != ToDateTime)
-            {
-                SetCurrentValue(ToDateTimeProperty, to);
-            }
-
-            // 2. Если после клампинга From > To – восстанавливаем порядок,
-            //    сохраняя намерение того свойства, которое изменилось.
-            if (from.HasValue && to.HasValue && from.Value > to.Value)
-            {
-                _isCoercing = true;
-                try
+                if (property == FromDateTimeProperty)
                 {
-                    if (property == FromDateTimeProperty)
-                    {
-                        SetCurrentValue(ToDateTimeProperty, from.Value);
-                    }
-                    else if (property == ToDateTimeProperty)
-                    {
-                        SetCurrentValue(FromDateTimeProperty, to.Value);
-                    }
-                    else if (property == MinDateTimeProperty)
-                    {
-                        SetCurrentValue(ToDateTimeProperty, from.Value);   // Min сдвинулся вправо → To подтягиваем
-                    }
-                    else if (property == MaxDateTimeProperty)
-                    {
-                        SetCurrentValue(FromDateTimeProperty, to.Value);   // Max сдвинулся влево → From подтягиваем
-                    }
-                    else
-                    {
-                        SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
-                    }
+                    SetCurrentValue(ToDateTimeProperty, from.Value);
                 }
-                finally
+                else if (property == ToDateTimeProperty)
                 {
-                    _isCoercing = false;
+                    SetCurrentValue(FromDateTimeProperty, to.Value);
+                }
+                else if (property == MinDateTimeProperty)
+                {
+                    SetCurrentValue(ToDateTimeProperty, from.Value);   // Min сдвинулся вправо → To подтягиваем
+                }
+                else if (property == MaxDateTimeProperty)
+                {
+                    SetCurrentValue(FromDateTimeProperty, to.Value);   // Max сдвинулся влево → From подтягиваем
+                }
+                else
+                {
+                    SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
                 }
             }
-            UpdateValidation();
+            finally
+            {
+                _isCoercing = false;
+            }
         }
-        finally
-        {
-            _suppressEvents = oldSuppress;
-        }
+        UpdateValidation();
     }
 
     private DateTime? ClampToBounds(DateTime? value)
@@ -522,24 +590,17 @@ public class DateTimeRangeSelector : TemplatedControl
     /// The right edge (anchor) is <see cref="MaxDateTime"/> if set, otherwise the current UTC time.
     /// The left edge is anchor minus 1 hour, but never earlier than <see cref="MinDateTime"/>.
     /// If only one edge was set by the consumer, the missing edge is derived from the anchor.
+    /// The operation is atomic: it raises <see cref="RangeChanged"/> and <see cref="ValidationChanged"/>
+    /// only once if the range changed.
     /// </summary>
-    private void ApplyDefaultRange()
-    {
-        if (FromDateTime.HasValue && ToDateTime.HasValue)
+    private void ApplyDefaultRange() => ApplyRangeChange(
+        action: () =>
         {
-            return;
-        }
+            if (FromDateTime.HasValue && ToDateTime.HasValue)
+            {
+                return;
+            }
 
-        var oldFrom = FromDateTime;
-        var oldTo = ToDateTime;
-        var oldIsValid = IsValid;
-        var oldValidationMessage = ValidationMessage;
-
-        bool oldSuppress = _suppressEvents;
-        _suppressEvents = true;
-
-        try
-        {
             var anchor = GetAnchor();
             var defaultDuration = TimeSpan.FromHours(1);
 
@@ -569,30 +630,16 @@ public class DateTimeRangeSelector : TemplatedControl
                 {
                     from = ToDateTime.Value;
                 }
-
                 SetCurrentValue(FromDateTimeProperty, from);
             }
 
             Coerce(FromDateTimeProperty);
-        }
-        finally
-        {
-            _suppressEvents = oldSuppress;
-        }
-
-        if (oldFrom != FromDateTime || oldTo != ToDateTime)
-        {
-            RaiseEvent(new DateTimeRangeChangedEventArgs(
-                RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
-            _rangeSubject.OnNext(new (FromDateTime, ToDateTime));
-        }
-        if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
-        {
-            RaiseEvent(new ValidationChangedEventArgs(
-                ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
-            _validationSubject.OnNext(new (IsValid, ValidationMessage));
-        }
-    }
+        },
+        oldFrom: FromDateTime,
+        oldTo: ToDateTime,
+        oldIsValid: IsValid,
+        oldValidationMessage: ValidationMessage
+    );
 }
 
 /// <summary>
