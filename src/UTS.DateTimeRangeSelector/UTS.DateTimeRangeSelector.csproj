@@ -1,10 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		<Folder Include="Themes\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
 		<PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
 	</ItemGroup>
@@ -17,6 +13,7 @@
 	<ItemGroup>
 	  <AvaloniaXaml Remove="Styles\DateTimePickerPanel.axaml" />
 	  <AvaloniaXaml Remove="Styles\DateTimeRangeSelector.axaml" />
+	  <AvaloniaXaml Remove="Themes\DateTimeRangeSelectorTheme.axaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -24,6 +21,9 @@
 	    <SubType>Designer</SubType>
 	  </AvaloniaResource>
 	  <AvaloniaResource Update="Styles\DateTimeRangeSelector.axaml">
+	    <SubType>Designer</SubType>
+	  </AvaloniaResource>
+	  <AvaloniaResource Update="Themes\DateTimeRangeSelectorTheme.axaml">
 	    <SubType>Designer</SubType>
 	  </AvaloniaResource>
 	</ItemGroup>

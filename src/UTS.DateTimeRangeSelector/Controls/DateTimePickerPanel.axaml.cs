@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using UTS.DateTimeRangeSelector.Core;
@@ -10,6 +11,7 @@ namespace UTS.DateTimeRangeSelector.Controls;
 /// A TemplatedControl for selecting a single date and time value with optional minimum and maximum boundaries.
 /// Composes a CalendarDatePicker and multiple NumericUpDown controls for time components.
 /// </summary>
+[TemplatePart("PART_Calendar", typeof(ConstrainedCalendarDatePicker))]
 public class DateTimePickerPanel : TemplatedControl
 {
     /// <summary>

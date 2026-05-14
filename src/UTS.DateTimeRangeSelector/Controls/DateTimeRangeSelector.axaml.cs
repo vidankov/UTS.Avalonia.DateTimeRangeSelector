@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
@@ -14,6 +15,8 @@ namespace UTS.DateTimeRangeSelector.Controls;
 /// A composite control for selecting a date/time range (From – To).
 /// Composes two <see cref="DateTimePickerPanel"/> instances.
 /// </summary>
+[TemplatePart("PART_FromPanel", typeof(DateTimePickerPanel))]
+[TemplatePart("PART_ToPanel", typeof(DateTimePickerPanel))]
 public class DateTimeRangeSelector : TemplatedControl
 {
     private readonly BehaviorSubject<DateTimeRange> _rangeSubject;
