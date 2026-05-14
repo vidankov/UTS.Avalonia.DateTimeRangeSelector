@@ -4,6 +4,17 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [0.0.6] — 14.05.2026
+
+### Добавлено
+- Маршрутизируемые события `RangeChanged` и `ValidationChanged` в `DateTimeRangeSelector`.
+  - `DateTimeRangeChangedEventArgs` (RoutedEventArgs) со свойствами `OldFrom`, `NewFrom`, `OldTo`, `NewTo`.
+  - `ValidationChangedEventArgs` (RoutedEventArgs) со свойствами `OldIsValid`, `NewIsValid`, `OldMessage`, `NewMessage`.
+  - События зарегистрированы как `RoutedEvent` с `RoutingStrategies.Direct` и снабжены CLR-обёртками.
+  - События генерируются однократно после завершения коэрции и валидации, даже при последовательном изменении `From` и `To`.
+- Механизм подавления дублирующихся событий (`_suppressEvents`) для атомарных операций (пресеты, начальный диапазон).
+- В демо-приложении `DateTimeRangeSelectorView` добавлен UI-лог последних 10 событий через `ObservableCollection<string>` в ViewModel.
+
 ## [0.0.5] — 12.05.2026
 
 ### Добавлено
