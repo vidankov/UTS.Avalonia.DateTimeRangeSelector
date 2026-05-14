@@ -1,12 +1,15 @@
 ﻿using Avalonia.Layout;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using System.Collections.ObjectModel;
 using UTS.DateTimeRangeSelector.Core;
 
 namespace UTS.DateTimeRangeSelector.DemoApp.ViewModels;
 
 public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : ReactiveObject, IRoutableViewModel
 {
+    private const int MaxLogEntries = 10;
+
     public string? UrlPathSegment => "DateTimeRangeSelector";
     public IScreen HostScreen { get; } = hostScreen;
     public ViewModelActivator Activator { get; } = new();
@@ -16,6 +19,7 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
         new ("Последние сутки", TimeSpan.FromDays(1)),
         new ("За весь период", RangeMax!.Value - RangeMin!.Value)
     ];
+    public ObservableCollection<string> EventLog { get; } = [];
 
     [Reactive] private DateTime? _rangeFrom = DateTime.UtcNow.AddDays(-1);
     [Reactive] private DateTime? _rangeTo = DateTime.UtcNow.AddDays(1).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
@@ -32,4 +36,13 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
     [ReactiveCommand] private void IncreaseMax() => RangeMax = RangeMax?.AddDays(1);
     [ReactiveCommand] private void DecreaseMax() => RangeMax = RangeMax?.AddDays(-1);
     [ReactiveCommand] private void ToggleShowPresets() => ShowPresets = !ShowPresets;
+
+    public void AddLog(string message)
+    {
+        EventLog.Add(message);
+        while (EventLog.Count > MaxLogEntries)
+        {
+            EventLog.RemoveAt(0);
+        }
+    }
 }

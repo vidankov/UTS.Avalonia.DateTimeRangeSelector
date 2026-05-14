@@ -21,10 +21,10 @@
 				<StackPanel Spacing="10">
 					<!-- Кнопки изменения границ -->
 					<StackPanel Orientation="Horizontal" Spacing="5">
-							<Button Command="{Binding IncreaseMinCommand}" Content="Min +1 день" />
-							<Button Command="{Binding DecreaseMinCommand}" Content="Min -1 день" />
-							<Button Command="{Binding IncreaseMaxCommand}" Content="Max +1 день" />
-							<Button Command="{Binding DecreaseMaxCommand}" Content="Max -1 день" />
+						<Button Command="{Binding IncreaseMinCommand}" Content="Min +1 день" />
+						<Button Command="{Binding DecreaseMinCommand}" Content="Min -1 день" />
+						<Button Command="{Binding IncreaseMaxCommand}" Content="Max +1 день" />
+						<Button Command="{Binding DecreaseMaxCommand}" Content="Max -1 день" />
 					</StackPanel>
 					<TextBlock Text="{Binding RangeMin, StringFormat='Min: {0:dd.MM.yyyy HH:mm}'}" />
 					<TextBlock Text="{Binding RangeMax, StringFormat='Max: {0:dd.MM.yyyy HH:mm}'}" />
@@ -54,6 +54,14 @@
 					</StackPanel>
 					<TextBlock Text="{Binding #RangeSelector.ValidationMessage}"
 							   Foreground="Red" FontWeight="SemiBold" />
+				</StackPanel>
+			</Border>
+
+			<!-- Логи -->
+			<Border BorderBrush="Gray" BorderThickness="1" Padding="5">
+				<StackPanel>
+					<TextBlock Text="Event log:" FontWeight="Bold" />
+					<ItemsControl ItemsSource="{Binding EventLog}" />
 				</StackPanel>
 			</Border>
 
