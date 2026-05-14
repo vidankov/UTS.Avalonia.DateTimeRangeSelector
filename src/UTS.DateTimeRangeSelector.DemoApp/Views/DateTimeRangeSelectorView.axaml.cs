@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
 using System.Reactive.Disposables;
@@ -69,4 +70,13 @@ public partial class DateTimeRangeSelectorView : ReactiveUserControl<DateTimeRan
         var msg = $"ValidationChanged: {e.OldIsValid} -> {e.NewIsValid}, Msg: '{e.OldMessage}' -> '{e.NewMessage}'";
         ViewModel?.AddEventLog(msg);
     }
+
+    private void SetRangeButton_Click(object? sender, RoutedEventArgs e)
+        => _rangeSelectorControl?.SetRange(DateTime.UtcNow.AddHours(-2), DateTime.UtcNow);
+
+    private void ApplyPresetButton_Click(object? sender, RoutedEventArgs e)
+        => _rangeSelectorControl?.ApplyPreset(TimeSpan.FromHours(2));
+
+    private void ResetToDefaultsButton_Click(object? sender, RoutedEventArgs e)
+        => _rangeSelectorControl?.ResetToDefaults();
 }

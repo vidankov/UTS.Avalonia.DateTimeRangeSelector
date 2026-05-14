@@ -41,6 +41,7 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
     [ReactiveCommand] private void ToggleShowPresets() => ShowPresets = !ShowPresets;
     [ReactiveCommand] private void ShowEventLog() { EventLogVisible = true; ObservableLogVisible = false; }
     [ReactiveCommand] private void ShowObservableLog() { ObservableLogVisible = true; EventLogVisible = false; }
+    [ReactiveCommand] private void ClearLogs() { EventLog.Clear(); ObservableLog.Clear(); }
 
     public void AddEventLog(string message) => AddLog(EventLog, message);
     public void AddObservableLog(string message) => AddLog(ObservableLog, message);

@@ -38,6 +38,13 @@
 					<Button Command="{Binding ToggleOrientationCommand}"
 							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"/>
 
+					<!-- Кнопки вызова команд прямого изменения диапазона -->
+					<StackPanel Orientation="Horizontal" Spacing="5">
+						<Button Content="SetRange (now-2h..now)" Click="SetRangeButton_Click" />
+						<Button Content="ApplyPreset (last 2h)" Click="ApplyPresetButton_Click" />
+						<Button Content="ResetToDefaults" Click="ResetToDefaultsButton_Click" />
+					</StackPanel>
+					
 					<!-- Кнопка вкл/выкл пресеты -->
 					<Button Command="{Binding ToggleShowPresetsCommand}"
 							Content="Включить/выключить использование пресетов"/>
@@ -69,12 +76,15 @@
 						<Button Content="Events"
 								Command="{Binding ShowEventLogCommand}"
 								FontWeight="{Binding EventLogVisible,
-											 Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
+								Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
 								Padding="6,2" />
 						<Button Content="Observables"
 								Command="{Binding ShowObservableLogCommand}"
 								FontWeight="{Binding ObservableLogVisible,
-											 Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
+								Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
+								Padding="6,2" />
+						<Button Content="Очистить Логи"
+								Command="{Binding ClearLogsCommand}"
 								Padding="6,2" />
 					</StackPanel>
 
