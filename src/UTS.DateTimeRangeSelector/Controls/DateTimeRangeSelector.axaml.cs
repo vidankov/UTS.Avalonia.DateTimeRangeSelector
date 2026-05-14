@@ -1,8 +1,10 @@
 ﻿using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Interactivity;
 using System.Windows.Input;
 using UTS.DateTimeRangeSelector.Core;
+using UTS.DateTimeRangeSelector.Events;
 
 namespace UTS.DateTimeRangeSelector.Controls;
 
@@ -164,6 +166,36 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Identifies the <see cref="RangeChanged"/> routed event.
+    /// </summary>
+    public static readonly RoutedEvent<DateTimeRangeChangedEventArgs> RangeChangedEvent =
+        RoutedEvent.Register<DateTimeRangeSelector, DateTimeRangeChangedEventArgs>(
+            nameof(RangeChanged),
+            RoutingStrategies.Direct);
+
+    /// <summary>
+    /// Identifies the <see cref="ValidationChanged"/> routed event.
+    /// </summary>
+    public static readonly RoutedEvent<ValidationChangedEventArgs> ValidationChangedEvent =
+        RoutedEvent.Register<DateTimeRangeSelector, ValidationChangedEventArgs>(
+            nameof(ValidationChanged),
+            RoutingStrategies.Direct);
+
+    /// <inheritdoc cref="RangeChangedEvent"/>
+    public event EventHandler<DateTimeRangeChangedEventArgs>? RangeChanged
+    {
+        add => AddHandler(RangeChangedEvent, value);
+        remove => RemoveHandler(RangeChangedEvent, value);
+    }
+
+    /// <inheritdoc cref="ValidationChangedEvent"/>
+    public event EventHandler<ValidationChangedEventArgs>? ValidationChanged
+    {
+        add => AddHandler(ValidationChangedEvent, value);
+        remove => RemoveHandler(ValidationChangedEvent, value);
+    }
+
+    /// <summary>
     /// Gets or sets the <see cref="System.TimeProvider"/> used to obtain the current UTC time
     /// when applying presets or initializing the default range.
     /// </summary>
@@ -190,10 +222,34 @@ public class DateTimeRangeSelector : TemplatedControl
         _applyPresetCommand = new PresetCommand(
             execute: duration =>
             {
-                var (start, end) = CalculateRangeFromAnchor(duration);
-                SetCurrentValue(FromDateTimeProperty, start);
-                SetCurrentValue(ToDateTimeProperty, end);
-                Coerce(FromDateTimeProperty);
+                var oldFrom = FromDateTime;
+                var oldTo = ToDateTime;
+                var oldIsValid = IsValid;
+                var oldValidationMessage = ValidationMessage;
+
+                _suppressEvents = true;
+                try
+                {
+                    var (start, end) = CalculateRangeFromAnchor(duration);
+                    SetCurrentValue(FromDateTimeProperty, start);
+                    SetCurrentValue(ToDateTimeProperty, end);
+                    Coerce(FromDateTimeProperty);
+                }
+                finally
+                {
+                    _suppressEvents = false;
+                }
+
+                if (oldFrom != FromDateTime || oldTo != ToDateTime)
+                {
+                    RaiseEvent(new DateTimeRangeChangedEventArgs(
+                        RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+                }
+                if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
+                {
+                    RaiseEvent(new ValidationChangedEventArgs(
+                        ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+                }
             },
             canExecute: () => ShowPresets
         );
@@ -233,6 +289,8 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     private bool _isCoercing;
 
+    private bool _suppressEvents;
+
     /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -253,7 +311,48 @@ public class DateTimeRangeSelector : TemplatedControl
             change.Property == MinDateTimeProperty ||
             change.Property == MaxDateTimeProperty)
         {
-            Coerce(change.Property);
+            if (!_suppressEvents)
+            {
+                DateTime? oldFrom;
+                DateTime? oldTo;
+
+                if (change.Property == FromDateTimeProperty)
+                {
+                    oldFrom = change.GetOldValue<DateTime?>();
+                    oldTo = ToDateTime;
+                }
+                else if (change.Property == ToDateTimeProperty)
+                {
+                    oldFrom = FromDateTime;
+                    oldTo = change.GetOldValue<DateTime?>();
+                }
+                else // MinDateTime or MaxDateTime
+                {
+                    oldFrom = FromDateTime;
+                    oldTo = ToDateTime;
+                }
+
+                bool oldIsValid = IsValid;
+                string? oldValidationMessage = ValidationMessage;
+
+                Coerce(change.Property);
+
+                if (oldFrom != FromDateTime || oldTo != ToDateTime)
+                {
+                    RaiseEvent(new DateTimeRangeChangedEventArgs(
+                        RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+                }
+
+                if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
+                {
+                    RaiseEvent(new ValidationChangedEventArgs(
+                        ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+                }
+            }
+            else
+            {
+                Coerce(change.Property);
+            }
         }
     }
 
@@ -275,53 +374,62 @@ public class DateTimeRangeSelector : TemplatedControl
             return;
         }
 
-        // 1. Нормализуем и клампим From/To к границам Min/Max
-        DateTime? from = ClampToBounds(FromDateTime);
-        DateTime? to = ClampToBounds(ToDateTime);
+        bool oldSuppress = _suppressEvents;
+        _suppressEvents = true;
+        try
+        {
+            // 1. Нормализуем и клампим From/To к границам Min/Max
+            DateTime? from = ClampToBounds(FromDateTime);
+            DateTime? to = ClampToBounds(ToDateTime);
 
-        if (from != FromDateTime)
-        {
-            SetCurrentValue(FromDateTimeProperty, from);
-        }
-        if (to != ToDateTime)
-        {
-            SetCurrentValue(ToDateTimeProperty, to);
-        }
-
-        // 2. Если после клампинга From > To – восстанавливаем порядок,
-        //    сохраняя намерение того свойства, которое изменилось.
-        if (from.HasValue && to.HasValue && from.Value > to.Value)
-        {
-            _isCoercing = true;
-            try
+            if (from != FromDateTime)
             {
-                if (property == FromDateTimeProperty)
+                SetCurrentValue(FromDateTimeProperty, from);
+            }
+            if (to != ToDateTime)
+            {
+                SetCurrentValue(ToDateTimeProperty, to);
+            }
+
+            // 2. Если после клампинга From > To – восстанавливаем порядок,
+            //    сохраняя намерение того свойства, которое изменилось.
+            if (from.HasValue && to.HasValue && from.Value > to.Value)
+            {
+                _isCoercing = true;
+                try
                 {
-                    SetCurrentValue(ToDateTimeProperty, from.Value);
+                    if (property == FromDateTimeProperty)
+                    {
+                        SetCurrentValue(ToDateTimeProperty, from.Value);
+                    }
+                    else if (property == ToDateTimeProperty)
+                    {
+                        SetCurrentValue(FromDateTimeProperty, to.Value);
+                    }
+                    else if (property == MinDateTimeProperty)
+                    {
+                        SetCurrentValue(ToDateTimeProperty, from.Value);   // Min сдвинулся вправо → To подтягиваем
+                    }
+                    else if (property == MaxDateTimeProperty)
+                    {
+                        SetCurrentValue(FromDateTimeProperty, to.Value);   // Max сдвинулся влево → From подтягиваем
+                    }
+                    else
+                    {
+                        SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
+                    }
                 }
-                else if (property == ToDateTimeProperty)
+                finally
                 {
-                    SetCurrentValue(FromDateTimeProperty, to.Value);
-                }
-                else if (property == MinDateTimeProperty)
-                {
-                    SetCurrentValue(ToDateTimeProperty, from.Value);   // Min сдвинулся вправо → To подтягиваем
-                }
-                else if (property == MaxDateTimeProperty)
-                {
-                    SetCurrentValue(FromDateTimeProperty, to.Value);   // Max сдвинулся влево → From подтягиваем
-                }
-                else
-                {
-                    SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
+                    _isCoercing = false;
                 }
             }
-            finally
-            {
-                _isCoercing = false;
-            }
+            UpdateValidation();
         }
-        UpdateValidation();
+        finally
+        {
+            _suppressEvents = oldSuppress;
+        }
     }
 
     private DateTime? ClampToBounds(DateTime? value)
@@ -394,40 +502,66 @@ public class DateTimeRangeSelector : TemplatedControl
             return;
         }
 
-        var anchor = GetAnchor();
-        var defaultDuration = TimeSpan.FromHours(1);
+        var oldFrom = FromDateTime;
+        var oldTo = ToDateTime;
+        var oldIsValid = IsValid;
+        var oldValidationMessage = ValidationMessage;
 
-        if (!FromDateTime.HasValue && !ToDateTime.HasValue)
+        bool oldSuppress = _suppressEvents;
+        _suppressEvents = true;
+
+        try
         {
-            var (start, end) = CalculateRangeFromAnchor(defaultDuration);
-            SetCurrentValue(FromDateTimeProperty, start);
-            SetCurrentValue(ToDateTimeProperty, end);
-        }
-        else if (FromDateTime.HasValue)
-        {
-            var to = anchor;
-            if (to < FromDateTime.Value)
+            var anchor = GetAnchor();
+            var defaultDuration = TimeSpan.FromHours(1);
+
+            if (!FromDateTime.HasValue && !ToDateTime.HasValue)
             {
-                to = FromDateTime.Value;
+                var (start, end) = CalculateRangeFromAnchor(defaultDuration);
+                SetCurrentValue(FromDateTimeProperty, start);
+                SetCurrentValue(ToDateTimeProperty, end);
             }
-            SetCurrentValue(ToDateTimeProperty, to);
-        }
-        else
-        {
-            var from = anchor - defaultDuration;
-            if (MinDateTime.HasValue && from < MinDateTime.Value)
+            else if (FromDateTime.HasValue)
             {
-                from = MinDateTime.Value;
+                var to = anchor;
+                if (to < FromDateTime.Value)
+                {
+                    to = FromDateTime.Value;
+                }
+                SetCurrentValue(ToDateTimeProperty, to);
             }
-            if (from > ToDateTime!.Value)
+            else
             {
-                from = ToDateTime.Value;
+                var from = anchor - defaultDuration;
+                if (MinDateTime.HasValue && from < MinDateTime.Value)
+                {
+                    from = MinDateTime.Value;
+                }
+                if (from > ToDateTime!.Value)
+                {
+                    from = ToDateTime.Value;
+                }
+
+                SetCurrentValue(FromDateTimeProperty, from);
             }
 
-            SetCurrentValue(FromDateTimeProperty, from);
+            Coerce(FromDateTimeProperty);
+        }
+        finally
+        {
+            _suppressEvents = oldSuppress;
         }
 
-        Coerce(FromDateTimeProperty);
+        if (oldFrom != FromDateTime || oldTo != ToDateTime)
+        {
+            RaiseEvent(new DateTimeRangeChangedEventArgs(
+                RangeChangedEvent, oldFrom, FromDateTime, oldTo, ToDateTime));
+        }
+        if (oldIsValid != IsValid || oldValidationMessage != ValidationMessage)
+        {
+            RaiseEvent(new ValidationChangedEventArgs(
+                ValidationChangedEvent, oldIsValid, IsValid, oldValidationMessage, ValidationMessage));
+        }
     }
 }
 
