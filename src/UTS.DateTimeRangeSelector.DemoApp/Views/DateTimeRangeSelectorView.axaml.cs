@@ -40,6 +40,7 @@ public partial class DateTimeRangeSelectorView : ReactiveUserControl<DateTimeRan
                     .Subscribe(validation =>
                     {
                         var msg = $"ValidationChanges: IsValid: {validation.IsValid}, Message: '{validation.Message}'";
+                        ViewModel?.AddObservableLog(msg);
                     })
                     .DisposeWith(disposables);
 
