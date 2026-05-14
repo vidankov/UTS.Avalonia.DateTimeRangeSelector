@@ -20,6 +20,7 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
         new ("За весь период", RangeMax!.Value - RangeMin!.Value)
     ];
     public ObservableCollection<string> EventLog { get; } = [];
+    public ObservableCollection<string> ObservableLog { get; } = [];
 
     [Reactive] private DateTime? _rangeFrom = DateTime.UtcNow.AddDays(-1);
     [Reactive] private DateTime? _rangeTo = DateTime.UtcNow.AddDays(1).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
@@ -27,6 +28,8 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
     [Reactive] private DateTime? _rangeMax = DateTime.UtcNow.Date.AddDays(7).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
     [Reactive] private Orientation _orientation = Orientation.Vertical;
     [Reactive] private bool _showPresets = false;
+    [Reactive] private bool _eventLogVisible = true;
+    [Reactive] private bool _observableLogVisible = false;
 
     [ReactiveCommand] private void ToggleOrientation() =>
         Orientation = Orientation == Orientation.Vertical
@@ -36,13 +39,18 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
     [ReactiveCommand] private void IncreaseMax() => RangeMax = RangeMax?.AddDays(1);
     [ReactiveCommand] private void DecreaseMax() => RangeMax = RangeMax?.AddDays(-1);
     [ReactiveCommand] private void ToggleShowPresets() => ShowPresets = !ShowPresets;
+    [ReactiveCommand] private void ShowEventLog() { EventLogVisible = true; ObservableLogVisible = false; }
+    [ReactiveCommand] private void ShowObservableLog() { ObservableLogVisible = true; EventLogVisible = false; }
 
-    public void AddLog(string message)
+    public void AddEventLog(string message) => AddLog(EventLog, message);
+    public void AddObservableLog(string message) => AddLog(ObservableLog, message);
+
+    public void AddLog(ObservableCollection<string> log, string message)
     {
-        EventLog.Add(message);
-        while (EventLog.Count > MaxLogEntries)
+        log.Add(message);
+        while (log.Count > MaxLogEntries)
         {
-            EventLog.RemoveAt(0);
+            log.RemoveAt(0);
         }
     }
 }

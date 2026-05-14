@@ -4,9 +4,14 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:vm="using:UTS.DateTimeRangeSelector.DemoApp.ViewModels"
 			 xmlns:controls="clr-namespace:UTS.DateTimeRangeSelector.Controls;assembly=UTS.DateTimeRangeSelector"
+			 xmlns:converters="clr-namespace:UTS.DateTimeRangeSelector.DemoApp.Converters"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="UTS.DateTimeRangeSelector.DemoApp.Views.DateTimeRangeSelectorView"
 			 x:DataType="vm:DateTimeRangeSelectorViewModel">
+
+	<UserControl.Resources>
+		<converters:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter"/>
+	</UserControl.Resources>
 
 	<Design.DataContext>
 		<vm:DateTimeRangeSelectorViewModel />
@@ -57,11 +62,26 @@
 				</StackPanel>
 			</Border>
 
-			<!-- Логи -->
+			<!-- Панель переключения логов -->
 			<Border BorderBrush="Gray" BorderThickness="1" Padding="5">
 				<StackPanel>
-					<TextBlock Text="Event log:" FontWeight="Bold" />
-					<ItemsControl ItemsSource="{Binding EventLog}" />
+					<StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,0,5">
+						<Button Content="Events"
+								Command="{Binding ShowEventLogCommand}"
+								FontWeight="{Binding EventLogVisible,
+											 Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
+								Padding="6,2" />
+						<Button Content="Observables"
+								Command="{Binding ShowObservableLogCommand}"
+								FontWeight="{Binding ObservableLogVisible,
+											 Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
+								Padding="6,2" />
+					</StackPanel>
+
+					<ItemsControl ItemsSource="{Binding EventLog}"
+								  IsVisible="{Binding EventLogVisible}" />
+					<ItemsControl ItemsSource="{Binding ObservableLog}"
+								  IsVisible="{Binding ObservableLogVisible}" />
 				</StackPanel>
 			</Border>
 
