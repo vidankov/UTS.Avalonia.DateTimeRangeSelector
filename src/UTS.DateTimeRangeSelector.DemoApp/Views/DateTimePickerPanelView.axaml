@@ -51,7 +51,8 @@
 			<Border BorderBrush="Gray" BorderThickness="1" Padding="10">
 				<StackPanel Spacing="5">
 					<TextBlock Text="4. Динамические границы (можно менять)" FontWeight="Bold" />
-					<controls:DateTimePickerPanel SelectedDateTime="{Binding DynamicDateTime, Mode=TwoWay}"
+					<controls:DateTimePickerPanel x:Name="TestEventsPicker"
+												  SelectedDateTime="{Binding DynamicDateTime, Mode=TwoWay}"
 												  MinDateTime="{Binding DynamicMin}"
 												  MaxDateTime="{Binding DynamicMax}" />
 					<TextBlock Text="{Binding DynamicDateTime, StringFormat='Выбрано: {0:dd.MM.yyyy HH:mm:ss.fff}'}" />
@@ -59,8 +60,14 @@
 						<Button Command="{Binding ChangeDynamicMinCommand}">Min +1 день</Button>
 						<Button Command="{Binding ChangeDynamicMaxCommand}">Max +1 день</Button>
 					</StackPanel>
+					<TextBlock Text="Логирование:" FontWeight="Bold" />
+					<ItemsControl ItemsSource="{Binding EventLog}" />
+					<Button Content="Очистить Логи"
+								Command="{Binding ClearLogsCommand}"
+								Padding="6,2" />
 				</StackPanel>
 			</Border>
+
 		</StackPanel>
 	</ScrollViewer>
 </UserControl>
