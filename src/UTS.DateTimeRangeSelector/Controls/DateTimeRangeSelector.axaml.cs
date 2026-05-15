@@ -502,26 +502,27 @@ public class DateTimeRangeSelector : TemplatedControl
             return;
         }
 
-        // 1. Нормализуем и клампим From/To к границам Min/Max
-        DateTime? from = ClampToBounds(FromDateTime);
-        DateTime? to = ClampToBounds(ToDateTime);
+        _isCoercing = true;
+        try
+        {
+            // 1. Нормализуем и клампим From/To к границам Min/Max
+            DateTime? from = ClampToBounds(FromDateTime);
+            DateTime? to = ClampToBounds(ToDateTime);
 
-        if (from != FromDateTime)
-        {
-            SetCurrentValue(FromDateTimeProperty, from);
-        }
-        if (to != ToDateTime)
-        {
-            SetCurrentValue(ToDateTimeProperty, to);
-        }
-
-        // 2. Если после клампинга From > To – восстанавливаем порядок,
-        //    сохраняя намерение того свойства, которое изменилось.
-        if (from.HasValue && to.HasValue && from.Value > to.Value)
-        {
-            _isCoercing = true;
-            try
+            if (from != FromDateTime)
             {
+                SetCurrentValue(FromDateTimeProperty, from);
+            }
+            if (to != ToDateTime)
+            {
+                SetCurrentValue(ToDateTimeProperty, to);
+            }
+
+            // 2. Если после клампинга From > To – восстанавливаем порядок,
+            //    сохраняя намерение того свойства, которое изменилось.
+            if (from.HasValue && to.HasValue && from.Value > to.Value)
+            {
+
                 if (property == FromDateTimeProperty)
                 {
                     SetCurrentValue(ToDateTimeProperty, from.Value);
@@ -543,12 +544,13 @@ public class DateTimeRangeSelector : TemplatedControl
                     SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
                 }
             }
-            finally
-            {
-                _isCoercing = false;
-            }
+
+            UpdateValidation();
         }
-        UpdateValidation();
+        finally
+        {
+            _isCoercing = false;
+        }
     }
 
     private DateTime? ClampToBounds(DateTime? value)
