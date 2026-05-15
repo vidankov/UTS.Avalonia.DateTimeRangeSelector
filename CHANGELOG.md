@@ -4,6 +4,19 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [0.0.8] — 15.05.2026
+
+### Добавлено
+- Core-модель `DateTimeFormatModel` с раздельными форматами `DateFormat` и `TimeFormat`, а также комбинированным `DateTimeFormat`.
+  - Значение по умолчанию: `dd.MM.yyyy HH:mm:ss.fff`.
+- Стилизуемые свойства `DateTimeFormat` (тип `DateTimeFormatModel`) в `DateTimeRangeSelector` и `DateTimePickerPanel`.
+  - `DateTimeRangeSelector` передаёт формат дочерним панелям через `TemplateBinding`.
+  - `DateTimePickerPanel` использует `DateTimeFormat.DateFormat` для настройки `CustomDateFormatString` календаря.
+- В демо-приложении добавлены команды динамической смены формата даты (`SetFirstDemoFormat`, `SetSecondDemoFormat`, `SetThirdDemoFormat`) и привязка `DateTimeFormat` к `DemoFormat`.
+
+### Изменено
+- Внутренняя тема `DateTimePickerPanel` теперь привязывает `CustomDateFormatString` календаря к `DateTimeFormat.DateFormat` вместо жёстко заданного значения.
+
 ## [0.0.7] — 14.05.2026
 
 ### Добавлено
