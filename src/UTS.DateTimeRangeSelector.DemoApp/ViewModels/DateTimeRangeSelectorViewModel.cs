@@ -30,6 +30,7 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
     [Reactive] private bool _showPresets = false;
     [Reactive] private bool _eventLogVisible = true;
     [Reactive] private bool _observableLogVisible = false;
+    [Reactive] private DateTimeFormatModel _demoFormat = DateTimeFormatModel.Default;
 
     [ReactiveCommand] private void ToggleOrientation() =>
         Orientation = Orientation == Orientation.Vertical
@@ -42,6 +43,9 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
     [ReactiveCommand] private void ShowEventLog() { EventLogVisible = true; ObservableLogVisible = false; }
     [ReactiveCommand] private void ShowObservableLog() { ObservableLogVisible = true; EventLogVisible = false; }
     [ReactiveCommand] private void ClearLogs() { EventLog.Clear(); ObservableLog.Clear(); }
+    [ReactiveCommand] private void SetFirstDemoFormat() => DemoFormat = new("dd.MM.yyyy", "HH:mm:ss.fff");
+    [ReactiveCommand] private void SetSecondDemoFormat() => DemoFormat = new("dd-MM-yyyy", "HH:mm:ss.fff");
+    [ReactiveCommand] private void SetThirdDemoFormat() => DemoFormat = new("yyyy/MM/dd", "HH:mm:ss.fff");
 
     public void AddEventLog(string message) => AddLog(EventLog, message);
     public void AddObservableLog(string message) => AddLog(ObservableLog, message);

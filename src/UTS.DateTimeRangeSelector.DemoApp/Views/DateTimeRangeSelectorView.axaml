@@ -34,6 +34,14 @@
 					<TextBlock Text="{Binding RangeMin, StringFormat='Min: {0:dd.MM.yyyy HH:mm}'}" />
 					<TextBlock Text="{Binding RangeMax, StringFormat='Max: {0:dd.MM.yyyy HH:mm}'}" />
 
+					<!-- Кнопки изменения формата даты -->
+					<StackPanel Orientation="Horizontal" Spacing="5">
+						<TextBlock Text="Переключение формата даты:" VerticalAlignment="Center"/>
+						<Button Command="{Binding SetFirstDemoFormatCommand}" Content="dd.MM.yyyy" />
+						<Button Command="{Binding SetSecondDemoFormatCommand}" Content="dd-MM-yyyy" />
+						<Button Command="{Binding SetThirdDemoFormatCommand}" Content="yyyy/MM/dd" />
+					</StackPanel>
+
 					<!-- Кнопка смены ориентации -->
 					<Button Command="{Binding ToggleOrientationCommand}"
 							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"/>
@@ -57,7 +65,8 @@
 													MaxDateTime="{Binding RangeMax}"
 													Orientation="{Binding Orientation}"
 													Presets="{Binding Presets}"
-													ShowPresets="{Binding ShowPresets}"/>
+													ShowPresets="{Binding ShowPresets}"
+													DateTimeFormat="{Binding DemoFormat}"/>
 
 					<!-- Валидация -->
 					<StackPanel Orientation="Horizontal" Spacing="5">
