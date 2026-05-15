@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Interactivity;
 using UTS.DateTimeRangeSelector.Core;
+using UTS.DateTimeRangeSelector.Events;
 
 namespace UTS.DateTimeRangeSelector.Controls;
 
@@ -263,6 +265,23 @@ public class DateTimePickerPanel : TemplatedControl
         }
     }
 
+    /// <summary>
+    /// Identifies the <see cref="SelectedDateTimeChanged"/> routed event.
+    /// </summary>
+    public static readonly RoutedEvent<SelectedDateTimeChangedEventArgs> SelectedDateTimeChangedEvent =
+        RoutedEvent.Register<DateTimePickerPanel, SelectedDateTimeChangedEventArgs>(
+            nameof(SelectedDateTimeChanged),
+            RoutingStrategies.Direct);
+
+    /// <summary>
+    /// Occurs when the <see cref="SelectedDateTime"/> property changes.
+    /// </summary>
+    public event EventHandler<SelectedDateTimeChangedEventArgs>? SelectedDateTimeChanged
+    {
+        add => AddHandler(SelectedDateTimeChangedEvent, value);
+        remove => RemoveHandler(SelectedDateTimeChangedEvent, value);
+    }
+
     private bool _updatingComponents;
     private ConstrainedCalendarDatePicker? _calendar;
 
@@ -272,7 +291,9 @@ public class DateTimePickerPanel : TemplatedControl
         base.OnPropertyChanged(change);
         if (change.Property == SelectedDateTimeProperty)
         {
-            OnSelectedDateTimeChanged(change.NewValue as DateTime?);
+            var oldValue = change.GetOldValue<DateTime?>();
+            var newValue = change.GetNewValue<DateTime?>();
+            OnSelectedDateTimeChanged(oldValue, newValue);
         }
         else if (change.Property == MinDateTimeProperty || change.Property == MaxDateTimeProperty)
         {
@@ -282,39 +303,52 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
-    /// Handles changes to <see cref="SelectedDateTime"/> and updates all time components and the date part.
-    /// Ensures that the individual components stay in sync with the source property.
+    /// Synchronizes the individual time components and the date picker with the new value of 
+    /// <see cref="SelectedDateTime"/>. If the value has changed, raises the 
+    /// <see cref="SelectedDateTimeChanged"/> routed event.
     /// </summary>
-    /// <param name="newValue">The new value of <see cref="SelectedDateTime"/>, or null if it was cleared.</param>
-    private void OnSelectedDateTimeChanged(DateTime? newValue)
+    /// <param name="oldValue">The previous <see cref="SelectedDateTime"/> value, or null if no value was previously set.</param>
+    /// <param name="newValue">The new <see cref="SelectedDateTime"/> value, or null if the value was cleared.</param>
+    private void OnSelectedDateTimeChanged(DateTime? oldValue, DateTime? newValue)
     {
         if (_updatingComponents)
         {
             return;
         }
+
         _updatingComponents = true;
-
-        if (newValue.HasValue)
+        try
         {
-            var dt = newValue.Value;
-            Hour = dt.Hour;
-            Minute = dt.Minute;
-            Second = dt.Second;
-            Millisecond = dt.Millisecond;
-            SelectedDate = dt.Date;
+            if (newValue.HasValue)
+            {
+                var dt = newValue.Value;
+                Hour = dt.Hour;
+                Minute = dt.Minute;
+                Second = dt.Second;
+                Millisecond = dt.Millisecond;
+                SelectedDate = dt.Date;
+            }
+            else
+            {
+                Hour = 0;
+                Minute = 0;
+                Second = 0;
+                Millisecond = 0;
+                SelectedDate = null;
+            }
+
+            _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
         }
-        else
+        finally
         {
-            Hour = 0;
-            Minute = 0;
-            Second = 0;
-            Millisecond = 0;
-            SelectedDate = null;
+            _updatingComponents = false;
         }
 
-        _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
-
-        _updatingComponents = false;
+        if (oldValue != newValue)
+        {
+            RaiseEvent(new SelectedDateTimeChangedEventArgs(
+                SelectedDateTimeChangedEvent, oldValue, newValue));
+        }
     }
 
     /// <summary>
@@ -380,8 +414,9 @@ public class DateTimePickerPanel : TemplatedControl
 
     /// <summary>
     /// Called when the control template is applied. Forces synchronization of the
-    /// individual time/date components with the current value of <see cref="SelectedDateTime"/>,
-    /// if it was set before the template was loaded.
+    /// individual time/date components with the current value of <see cref="SelectedDateTime"/>.
+    /// If a value was set before the template was loaded, raises the 
+    /// <see cref="SelectedDateTimeChanged"/> event with a null old value.
     /// </summary>
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -393,7 +428,7 @@ public class DateTimePickerPanel : TemplatedControl
 
         if (SelectedDateTime.HasValue)
         {
-            OnSelectedDateTimeChanged(SelectedDateTime.Value);
+            OnSelectedDateTimeChanged(null, SelectedDateTime.Value);
         }
     }
 
