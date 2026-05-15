@@ -13,9 +13,15 @@
   - `DateTimeRangeSelector` передаёт формат дочерним панелям через `TemplateBinding`.
   - `DateTimePickerPanel` использует `DateTimeFormat.DateFormat` для настройки `CustomDateFormatString` календаря.
 - В демо-приложении добавлены команды динамической смены формата даты (`SetFirstDemoFormat`, `SetSecondDemoFormat`, `SetThirdDemoFormat`) и привязка `DateTimeFormat` к `DemoFormat`.
+- Маршрутизируемое событие `SelectedDateTimeChanged` в `DateTimePickerPanel`.
+  - `SelectedDateTimeChangedEventArgs` (RoutedEventArgs) со свойствами `OldValue`, `NewValue`.
+  - Событие зарегистрировано как `RoutedEvent` с `RoutingStrategies.Direct` и снабжено CLR-обёрткой.
+  - Событие генерируется при любом изменении `SelectedDateTime`, включая начальную установку (с `OldValue = null`).
+- В демо-приложении добавлено логирование `SelectedDateTimeChanged` для одного из пикеров.
 
 ### Изменено
 - Внутренняя тема `DateTimePickerPanel` теперь привязывает `CustomDateFormatString` календаря к `DateTimeFormat.DateFormat` вместо жёстко заданного значения.
+- Метод `OnSelectedDateTimeChanged` в `DateTimePickerPanel` теперь принимает старое и новое значения, а не считывает их из свойства.
 
 ## [0.0.7] — 14.05.2026
 
