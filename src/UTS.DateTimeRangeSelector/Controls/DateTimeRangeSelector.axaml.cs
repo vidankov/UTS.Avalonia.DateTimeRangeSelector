@@ -142,6 +142,26 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="DateTimeFormat"/> property.
+    /// </summary>
+    public static readonly StyledProperty<DateTimeFormatModel> DateTimeFormatProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, DateTimeFormatModel>(
+            nameof(DateTimeFormat),
+            defaultValue: DateTimeFormatModel.Default);
+
+    /// <summary>
+    /// Gets or sets the format model used to display date and time values.
+    /// The <see cref="Core.DateTimeFormatModel.DateFormat"/> is used for the calendar date picker,
+    /// and the combined <see cref="Core.DateTimeFormatModel.DateTimeFormat"/> is intended for text input.
+    /// Default is "dd.MM.yyyy HH:mm:ss.fff".
+    /// </summary>
+    public DateTimeFormatModel DateTimeFormat
+    {
+        get => GetValue(DateTimeFormatProperty);
+        set => SetValue(DateTimeFormatProperty, value);
+    }
+
+    /// <summary>
     /// Defines the read-only <see cref="IsValid"/> property.
     /// </summary>
     public static readonly DirectProperty<DateTimeRangeSelector, bool> IsValidProperty =

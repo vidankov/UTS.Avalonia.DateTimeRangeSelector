@@ -56,7 +56,8 @@
 														  MinDateTime="{Binding MinDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
-																		RelativeSource={RelativeSource TemplatedParent}}"/>
+																		RelativeSource={RelativeSource TemplatedParent}}"
+														  DateTimeFormat="{TemplateBinding DateTimeFormat}"/>
 						</StackPanel>
 
 						<StackPanel Orientation="Vertical">
@@ -68,7 +69,8 @@
 														  MinDateTime="{Binding MinDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
-																		RelativeSource={RelativeSource TemplatedParent}}"/>
+																		RelativeSource={RelativeSource TemplatedParent}}"
+														  DateTimeFormat="{TemplateBinding DateTimeFormat}"/>
 						</StackPanel>
 
 					</StackPanel>

@@ -35,12 +35,15 @@
 					<!-- Выбор даты -->
 					<controls:ConstrainedCalendarDatePicker x:Name="PART_Calendar"
 													   SelectedDate="{Binding SelectedDate,
-													   RelativeSource={RelativeSource TemplatedParent},
-													   Mode=TwoWay}"
+																	  RelativeSource={RelativeSource TemplatedParent},
+																	  Mode=TwoWay}"
 													   MinDate="{Binding MinDateTime,
-													   RelativeSource={RelativeSource TemplatedParent}}"
+																 RelativeSource={RelativeSource TemplatedParent}}"
 													   MaxDate="{Binding MaxDateTime,
-													   RelativeSource={RelativeSource TemplatedParent}}"
+																 RelativeSource={RelativeSource TemplatedParent}}"
+													   SelectedDateFormat="Custom"
+													   CustomDateFormatString="{Binding DateTimeFormat.DateFormat,
+																				RelativeSource={RelativeSource TemplatedParent}}"
 													   MinWidth="150" />
 
 					<TextBlock Text=" - " VerticalAlignment="Center" Margin="5,0" />
