@@ -1,8 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<PropertyGroup>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageId>UTS.Avalonia.DateTimeRangeSelector</PackageId>
+		<Version>0.0.8</Version>
+		<Authors>UTS</Authors>
+		<Description>Avalonia controls for selecting date/time ranges (DateTimeRangeSelector and DateTimePickerPanel).</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/QuickLeopard/UTS.Avalonia.DateTimeRangeSelector</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/QuickLeopard/UTS.Avalonia.DateTimeRangeSelector</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>avalonia;datetime;daterange;picker;control</PackageTags>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
 		<PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>
