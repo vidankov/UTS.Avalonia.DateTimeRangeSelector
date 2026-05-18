@@ -176,4 +176,82 @@ public class DateTimeRangeSelectorTests
         _selector.FromDateTime.Should().Be(Now.AddHours(-1));
         _selector.ToDateTime.Should().Be(Now);
     }
+
+    [Fact]
+    public void WhenMinExceedsMax_FromAndToShouldBeNull()
+    {
+        // Arrange
+        var min = Now.AddHours(2);
+        var max = Now;
+        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
+        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now.AddHours(1));
+
+        // Act: делаем границы противоречивыми
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, min);
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, max);
+
+        // Assert
+        _selector.FromDateTime.Should().BeNull("значения должны сбрасываться при невалидных границах");
+        _selector.ToDateTime.Should().BeNull();
+    }
+
+    [Fact]
+    public void WhenMinExceedsMax_IsEnabledShouldBeFalse()
+    {
+        // Arrange & Act
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
+
+        // Assert
+        _selector.IsEnabled.Should().BeFalse("контрол должен отключаться при Min > Max");
+    }
+
+    [Fact]
+    public void WhenBoundsBecomeValid_IsEnabledShouldBeTrue()
+    {
+        // Arrange
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
+        _selector.IsEnabled.Should().BeFalse(); // precondition
+
+        // Act: делаем границы снова валидными
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddHours(3));
+
+        // Assert
+        _selector.IsEnabled.Should().BeTrue("контрол должен включаться при восстановлении Min < Max");
+    }
+
+    [Fact]
+    public void WhenMinExceedsMax_RangeChangedShouldBeRaised()
+    {
+        // Arrange
+        var eventRaised = false;
+        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
+        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now);
+        _selector.RangeChanged += (_, _) => eventRaised = true;
+
+        // Act
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
+
+        // Assert
+        eventRaised.Should().BeTrue("сброс значений при Min > Max должен порождать событие RangeChanged");
+    }
+
+    [Fact]
+    public void WhenMinExceedsMax_ValidationChangedShouldBeRaised()
+    {
+        // Arrange
+        var eventRaised = false;
+        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
+        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now);
+        _selector.ValidationChanged += (_, _) => eventRaised = true;
+
+        // Act
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
+
+        // Assert
+        eventRaised.Should().BeTrue("изменение валидности должно порождать ValidationChanged");
+    }
 }
