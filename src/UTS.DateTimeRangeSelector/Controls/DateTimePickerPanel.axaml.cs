@@ -72,7 +72,7 @@ public class DateTimePickerPanel : TemplatedControl
     /// Defines the <see cref="DateTimeFormat"/> property.
     /// </summary>
     public static readonly StyledProperty<DateTimeFormatModel> DateTimeFormatProperty =
-        AvaloniaProperty.Register<DateTimeRangeSelector, DateTimeFormatModel>(
+        AvaloniaProperty.Register<DateTimePickerPanel, DateTimeFormatModel>(
             nameof(DateTimeFormat),
             defaultValue: DateTimeFormatModel.Default);
 
