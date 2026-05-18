@@ -491,6 +491,8 @@ public class DateTimeRangeSelector : TemplatedControl
     /// Normalizes <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to UTC,
     /// clamps them to <see cref="MinDateTime"/> / <see cref="MaxDateTime"/>,
     /// and ensures <c>From &lt;= To</c> by adjusting the opposite boundary when the range becomes inverted.
+    /// If <see cref="MinDateTime"/> > <see cref="MaxDateTime"/>, both range values are reset to null
+    /// and the control is disabled until valid bounds are restored.
     /// Calls <see cref="UpdateValidation"/> after enforcement.
     /// </summary>
     /// <param name="property">The property that triggered the coercion, used to preserve intent
@@ -505,7 +507,24 @@ public class DateTimeRangeSelector : TemplatedControl
         _isCoercing = true;
         try
         {
-            // 1. Нормализуем и клампим From/To к границам Min/Max
+            // 1. Если границы противоречивы – сбрасываем значения и прекращаем обработку.
+            if (MinDateTime.HasValue && MaxDateTime.HasValue
+                && MinDateTime.Value > MaxDateTime.Value)
+            {
+                if (FromDateTime.HasValue)
+                {
+                    SetCurrentValue(FromDateTimeProperty, null);
+                }
+                if (ToDateTime.HasValue)
+                {
+                    SetCurrentValue(ToDateTimeProperty, null);
+                }
+
+                UpdateValidation();
+                return;
+            }
+
+            // 2. Нормализуем и клампим From/To к границам Min/Max
             DateTime? from = ClampToBounds(FromDateTime);
             DateTime? to = ClampToBounds(ToDateTime);
 
@@ -518,7 +537,7 @@ public class DateTimeRangeSelector : TemplatedControl
                 SetCurrentValue(ToDateTimeProperty, to);
             }
 
-            // 2. Если после клампинга From > To – восстанавливаем порядок,
+            // 3. Если после клампинга From > To – восстанавливаем порядок,
             //    сохраняя намерение того свойства, которое изменилось.
             if (from.HasValue && to.HasValue && from.Value > to.Value)
             {
@@ -563,17 +582,28 @@ public class DateTimeRangeSelector : TemplatedControl
         return DateTimeRangeCoercion.Clamp(dt, MinDateTime, MaxDateTime);
     }
 
+    /// <summary>
+    /// Re-evaluates <see cref="IsValid"/> and <see cref="ValidationMessage"/> based on the current
+    /// state of <see cref="MinDateTime"/>, <see cref="MaxDateTime"/>, <see cref="FromDateTime"/>,
+    /// and <see cref="ToDateTime"/>. Enables or disables the control based on boundary validity.
+    /// </summary>
     private void UpdateValidation()
     {
+        if (MinDateTime.HasValue && MaxDateTime.HasValue &&
+            MinDateTime.Value > MaxDateTime.Value)
+        {
+            IsValid = false;
+            ValidationMessage = "MinDateTime cannot be greater than MaxDateTime.";
+            IsEnabled = false;
+            return;
+        }
+
+        IsEnabled = true;
+
         if (!FromDateTime.HasValue || !ToDateTime.HasValue)
         {
             IsValid = false;
             ValidationMessage = "Both From and To must be set.";
-        }
-        else if (MinDateTime.HasValue && MaxDateTime.HasValue && MinDateTime.Value > MaxDateTime.Value)
-        {
-            IsValid = false;
-            ValidationMessage = "MinDateTime cannot be greater than MaxDateTime.";
         }
         else if (FromDateTime.Value > ToDateTime.Value)
         {

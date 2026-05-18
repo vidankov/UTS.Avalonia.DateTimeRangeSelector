@@ -179,14 +179,13 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
     /// </summary>
     private void EnforceBoundaries()
     {
-        if (_calendar is null) return;
+        if (_calendar is null)
+        {
+            return;
+        }
 
-        var min = MinDate?.Date;
-        var max = MaxDate?.Date;
-
-        _calendar.IsEnabled = !(min.HasValue && max.HasValue && min.Value == max.Value);
-        _calendar.DisplayDateStart = min;
-        _calendar.DisplayDateEnd = max;
+        _calendar.DisplayDateStart = MinDate?.Date;
+        _calendar.DisplayDateEnd = MaxDate?.Date;
     }
 
     private DateTime? ClampDate(DateTime? date)

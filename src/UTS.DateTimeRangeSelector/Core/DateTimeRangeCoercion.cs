@@ -8,9 +8,14 @@ public static class DateTimeRangeCoercion
     /// <summary>
     /// Clamps <paramref name="value"/> so that it lies within [<paramref name="min"/>, <paramref name="max"/>].
     /// Null bounds mean no limit on the corresponding side.
+    /// If both bounds are set and <paramref name="min"/> > <paramref name="max"/>, the value is returned unchanged
     /// </summary>
     public static DateTime Clamp(DateTime value, DateTime? min, DateTime? max)
     {
+        if (min.HasValue && max.HasValue && min.Value > max.Value)
+        {
+            return value;
+        }
         if (min.HasValue && value < min.Value)
         {
             value = min.Value;

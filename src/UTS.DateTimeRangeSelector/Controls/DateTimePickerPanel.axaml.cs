@@ -142,9 +142,6 @@ public class DateTimePickerPanel : TemplatedControl
                     UpdateSelectedDateTime();
                 }
             }
-
-            // Force calendar bounds reset in case the control altered them
-            ApplyMinMaxToCalendar();
         }
     }
 
@@ -298,7 +295,6 @@ public class DateTimePickerPanel : TemplatedControl
         else if (change.Property == MinDateTimeProperty || change.Property == MaxDateTimeProperty)
         {
             CoerceValue(SelectedDateTimeProperty);
-            ApplyMinMaxToCalendar();
         }
     }
 
@@ -424,27 +420,9 @@ public class DateTimePickerPanel : TemplatedControl
 
         _calendar = e.NameScope.Find<ConstrainedCalendarDatePicker>("PART_Calendar");
 
-        ApplyMinMaxToCalendar();
-
         if (SelectedDateTime.HasValue)
         {
             OnSelectedDateTimeChanged(null, SelectedDateTime.Value);
         }
-    }
-
-    /// <summary>
-    /// Applies <see cref="MinDateTime"/> and <see cref="MaxDateTime"/> to the calendar's
-    /// <c>DisplayDateStart</c> and <c>DisplayDateEnd</c>.
-    /// </summary>
-    private void ApplyMinMaxToCalendar()
-    {
-        if (_calendar is null)
-        {
-            return;
-        }
-
-        var min = MinDateTime?.Date;
-        var max = MaxDateTime?.Date;
-        _calendar.IsEnabled = !(min.HasValue && max.HasValue && min.Value == max.Value);
     }
 }
