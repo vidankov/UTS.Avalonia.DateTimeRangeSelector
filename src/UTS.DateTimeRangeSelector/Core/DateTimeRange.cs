@@ -10,10 +10,11 @@ public record DateTimeRange(DateTime? From, DateTime? To)
     private static readonly DateTimeRange empty = new(null, null);
 
     /// <summary>
-    /// Gets the duration of the range if both <see cref="From"/> and <see cref="To"/> are set,
-    /// otherwise null.
+    /// Gets the duration of the range if both <see cref="From"/> and <see cref="To"/> are set
+    /// and <see cref="From"/> is not later than <see cref="To"/>; otherwise, null.
     /// </summary>
-    public TimeSpan? Duration => From.HasValue && To.HasValue ? To.Value - From.Value : null;
+    public TimeSpan? Duration => From.HasValue && To.HasValue && To.Value >= From.Value
+        ? To.Value - From.Value : null;
 
     /// <summary>
     /// An empty range with no boundaries set.
