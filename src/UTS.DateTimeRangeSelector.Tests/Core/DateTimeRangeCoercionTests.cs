@@ -32,4 +32,17 @@ public class DateTimeRangeCoercionTests
         var value = new DateTime(2025, 6, 15, 0, 0, 0, DateTimeKind.Utc);
         DateTimeRangeCoercion.Clamp(value, null, null).Should().Be(value);
     }
+
+    [Fact]
+    public void Clamp_WhenMinGreaterThanMax_ShouldNotMutateValue()
+    {
+        var value = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+        var contradictoryMin = value.AddHours(2);
+        var contradictoryMax = value.AddHours(-2);
+
+        DateTimeRangeCoercion
+            .Clamp(value, contradictoryMin, contradictoryMax)
+            .Should()
+            .Be(value, "contradictory bounds should be reported by validation instead of silently overwriting user values");
+    }
 }
