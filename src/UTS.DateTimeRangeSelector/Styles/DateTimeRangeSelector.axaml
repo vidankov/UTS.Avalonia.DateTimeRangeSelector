@@ -22,7 +22,9 @@
 	<ControlTheme x:Key="{x:Type controls:DateTimeRangeSelector}" TargetType="controls:DateTimeRangeSelector">
 		<Setter Property="Template">
 			<ControlTemplate>
-				<StackPanel Orientation="Vertical" Spacing="15">
+				<StackPanel Orientation="Vertical"
+							Spacing="15"
+							IsEnabled="{Binding AreBoundsValid, RelativeSource={RelativeSource TemplatedParent}}">
 
 					<!-- Пресеты -->
 					<ItemsControl ItemsSource="{TemplateBinding Presets}"

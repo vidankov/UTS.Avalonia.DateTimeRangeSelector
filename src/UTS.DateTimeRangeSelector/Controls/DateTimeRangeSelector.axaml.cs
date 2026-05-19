@@ -194,6 +194,26 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the read-only <see cref="AreBoundsValid"/> property.
+    /// </summary>
+    public static readonly DirectProperty<DateTimeRangeSelector, bool> AreBoundsValidProperty =
+        AvaloniaProperty.RegisterDirect<DateTimeRangeSelector, bool>(
+            nameof(AreBoundsValid), o => o.AreBoundsValid);
+
+    private bool _areBoundsValid = true;
+
+    /// <summary>
+    /// Gets a value indicating whether the current <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>
+    /// bounds are valid (i.e., not contradictory: Min &lt;= Max or not both set).
+    /// This property is intended for internal template use and is read-only.
+    /// </summary>
+    public bool AreBoundsValid
+    {
+        get => _areBoundsValid;
+        private set => SetAndRaise(AreBoundsValidProperty, ref _areBoundsValid, value);
+    }
+
+    /// <summary>
     /// Identifies the <see cref="RangeChanged"/> routed event.
     /// </summary>
     public static readonly RoutedEvent<DateTimeRangeChangedEventArgs> RangeChangedEvent =
@@ -589,16 +609,15 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     private void UpdateValidation()
     {
-        if (MinDateTime.HasValue && MaxDateTime.HasValue &&
-            MinDateTime.Value > MaxDateTime.Value)
+        bool boundsValid = !(MinDateTime.HasValue && MaxDateTime.HasValue && MinDateTime.Value > MaxDateTime.Value);
+        AreBoundsValid = boundsValid;
+
+        if (!boundsValid)
         {
             IsValid = false;
             ValidationMessage = "MinDateTime cannot be greater than MaxDateTime.";
-            IsEnabled = false;
             return;
         }
-
-        IsEnabled = true;
 
         if (!FromDateTime.HasValue || !ToDateTime.HasValue)
         {
