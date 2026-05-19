@@ -280,6 +280,13 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     private bool _updatingComponents;
+
+    /// <summary>
+    /// Prevents re-entrant calls to <see cref="UpdateSelectedDateTime"/> when components
+    /// are being synchronized in <see cref="SyncComponentsFromSelectedDateTime"/>.
+    /// </summary>
+    private bool _syncingComponents;
+
     private ConstrainedCalendarDatePicker? _calendar;
 
     /// <inheritdoc/>
@@ -349,12 +356,15 @@ public class DateTimePickerPanel : TemplatedControl
 
     /// <summary>
     /// Recalculates <see cref="SelectedDateTime"/> from the current values of
-    /// <see cref="SelectedDate"/> and the time components.
-    /// Does nothing if <see cref="SelectedDate"/> is not set.
+    /// <see cref="SelectedDate"/> and the time components (<see cref="Hour"/>, <see cref="Minute"/>,
+    /// <see cref="Second"/>, <see cref="Millisecond"/>). If the resulting value exceeds the bounds
+    /// set by <see cref="MinDateTime"/> or <see cref="MaxDateTime"/>, the coercion logic clamps it.
+    /// After setting the value, <see cref="SyncComponentsFromSelectedDateTime"/> is called to ensure
+    /// that the time components reflect the actual (possibly clamped) <see cref="SelectedDateTime"/>.
     /// </summary>
     private void UpdateSelectedDateTime()
     {
-        if (!SelectedDate.HasValue)
+        if (!SelectedDate.HasValue || _syncingComponents)
         {
             return;
         }
@@ -368,7 +378,54 @@ public class DateTimePickerPanel : TemplatedControl
         {
             // Invalid time combination (e.g. 24:00:00.000) – silently ignore.
         }
+        finally
+        {
+            SyncComponentsFromSelectedDateTime();
+        }
     }
+
+    /// <summary>
+    /// Forces synchronization of the individual time components (<see cref="Hour"/>, <see cref="Minute"/>,
+    /// <see cref="Second"/>, <see cref="Millisecond"/>) and <see cref="SelectedDate"/> with the current
+    /// value of <see cref="SelectedDateTime"/>. This is necessary because after coercion, 
+    /// <see cref="SelectedDateTime"/> may remain unchanged while the components still hold the
+    /// invalid input values. Calling this method immediately corrects the visual representation.
+    /// </summary>
+    private void SyncComponentsFromSelectedDateTime()
+    {
+        if (_syncingComponents)
+        {
+            return;
+        }
+
+        _syncingComponents = true;
+        try
+        {
+            var dt = SelectedDateTime;
+            if (dt.HasValue)
+            {
+                Hour = dt.Value.Hour;
+                Minute = dt.Value.Minute;
+                Second = dt.Value.Second;
+                Millisecond = dt.Value.Millisecond;
+                SelectedDate = dt.Value.Date;
+            }
+            else
+            {
+                Hour = 0;
+                Minute = 0;
+                Second = 0;
+                Millisecond = 0;
+                SelectedDate = null;
+            }
+            _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+        }
+        finally
+        {
+            _syncingComponents = false;
+        }
+    }
+
 
     /// <summary>
     /// Coerces a <see cref="DateTime"/> value assigned to <see cref="SelectedDateTime"/>.
