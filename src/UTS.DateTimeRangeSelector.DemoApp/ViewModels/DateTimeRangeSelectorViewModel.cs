@@ -24,8 +24,8 @@ public partial class DateTimeRangeSelectorViewModel(IScreen hostScreen) : Reacti
 
     [Reactive] private DateTime? _rangeFrom = DateTime.UtcNow.AddDays(-1);
     [Reactive] private DateTime? _rangeTo = DateTime.UtcNow.AddDays(1).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
-    [Reactive] private DateTime? _rangeMin = DateTime.UtcNow.Date.AddDays(-7);
-    [Reactive] private DateTime? _rangeMax = DateTime.UtcNow.Date.AddDays(7).AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
+    [Reactive] private DateTime? _rangeMin = DateTime.UtcNow.Date.AddDays(-7).AddHours(-5).AddMinutes(-30).AddSeconds(-30).AddMilliseconds(-500);
+    [Reactive] private DateTime? _rangeMax = DateTime.UtcNow.Date.AddDays(7).AddHours(10).AddMinutes(25).AddSeconds(45).AddMilliseconds(777);
     [Reactive] private Orientation _orientation = Orientation.Vertical;
     [Reactive] private bool _showPresets = false;
     [Reactive] private bool _eventLogVisible = true;
