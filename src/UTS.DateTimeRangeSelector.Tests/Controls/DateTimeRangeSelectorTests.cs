@@ -196,29 +196,31 @@ public class DateTimeRangeSelectorTests
     }
 
     [Fact]
-    public void WhenMinExceedsMax_IsEnabledShouldBeFalse()
+    public void WhenMinExceedsMax_AreBoundsValidShouldBeFalse_And_IsEnabledShouldBeUnchanged()
     {
         // Arrange & Act
         _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
         _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
 
         // Assert
-        _selector.IsEnabled.Should().BeFalse("контрол должен отключаться при Min > Max");
+        _selector.AreBoundsValid.Should().BeFalse();
+        _selector.IsEnabled.Should().BeTrue();
     }
 
     [Fact]
-    public void WhenBoundsBecomeValid_IsEnabledShouldBeTrue()
+    public void WhenBoundsBecomeValid_AreBoundsValidShouldBeTrue()
     {
         // Arrange
         _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
         _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
-        _selector.IsEnabled.Should().BeFalse(); // precondition
+        _selector.AreBoundsValid.Should().BeFalse(); // precondition
 
-        // Act: делаем границы снова валидными
+        // Act
         _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddHours(3));
 
         // Assert
-        _selector.IsEnabled.Should().BeTrue("контрол должен включаться при восстановлении Min < Max");
+        _selector.AreBoundsValid.Should().BeTrue();
+        _selector.IsEnabled.Should().BeTrue();
     }
 
     [Fact]
