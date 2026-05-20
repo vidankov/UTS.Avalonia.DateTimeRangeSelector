@@ -10,6 +10,7 @@
   <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://UTS.DateTimeRangeSelector/Styles/ConstrainedCalendarDatePicker.axaml"/>
                 <ResourceInclude Source="avares://UTS.DateTimeRangeSelector/Styles/DateTimePickerPanel.axaml"/>
                 <ResourceInclude Source="avares://UTS.DateTimeRangeSelector/Styles/DateTimeRangeSelector.axaml"/>
             </ResourceDictionary.MergedDictionaries>

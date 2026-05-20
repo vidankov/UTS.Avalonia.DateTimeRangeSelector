@@ -34,12 +34,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <AvaloniaXaml Remove="Styles\ConstrainedCalendarDatePicker.axaml" />
 	  <AvaloniaXaml Remove="Styles\DateTimePickerPanel.axaml" />
 	  <AvaloniaXaml Remove="Styles\DateTimeRangeSelector.axaml" />
 	  <AvaloniaXaml Remove="Themes\DateTimeRangeSelectorTheme.axaml" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <AvaloniaResource Update="Styles\ConstrainedCalendarDatePicker.axaml">
+	    <SubType>Designer</SubType>
+	  </AvaloniaResource>
 	  <AvaloniaResource Update="Styles\DateTimePickerPanel.axaml">
 	    <SubType>Designer</SubType>
 	  </AvaloniaResource>
