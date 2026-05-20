@@ -31,6 +31,12 @@
 						<Button Command="{Binding IncreaseMaxCommand}" Content="Max +1 день" />
 						<Button Command="{Binding DecreaseMaxCommand}" Content="Max -1 день" />
 					</StackPanel>
+
+					<Button Content="Тест консистентности DisplayStartDate/DisplayEndDate виджета календаря"
+							Command="{Binding SimulateBoundsChangeCommand}"
+							HorizontalAlignment="Left"
+							Margin="0,10,0,0" />
+
 					<TextBlock Text="{Binding RangeMin, StringFormat='Min: {0:dd.MM.yyyy HH:mm}'}" />
 					<TextBlock Text="{Binding RangeMax, StringFormat='Max: {0:dd.MM.yyyy HH:mm}'}" />
 
@@ -44,7 +50,8 @@
 
 					<!-- Кнопка смены ориентации -->
 					<Button Command="{Binding ToggleOrientationCommand}"
-							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"/>
+							Content="Переключить позиционирование: [ Горизонтальное | Вертикальное ]"
+							HorizontalAlignment="Left" />
 
 					<!-- Кнопки вызова команд прямого изменения диапазона -->
 					<StackPanel Orientation="Horizontal" Spacing="5">
@@ -52,10 +59,11 @@
 						<Button Content="ApplyPreset (last 2h)" Click="ApplyPresetButton_Click" />
 						<Button Content="ResetToDefaults" Click="ResetToDefaultsButton_Click" />
 					</StackPanel>
-					
+
 					<!-- Кнопка вкл/выкл пресеты -->
 					<Button Command="{Binding ToggleShowPresetsCommand}"
-							Content="Включить/выключить использование пресетов"/>
+							Content="Включить/выключить использование пресетов"
+							HorizontalAlignment="Left" />
 
 					<!-- Контрол -->
 					<controls:DateTimeRangeSelector x:Name="RangeSelector"
