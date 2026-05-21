@@ -64,6 +64,7 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
     {
         // Before base class finalises the selection, correct the text if it's out of bounds.
         CorrectInputIfNeeded();
+        EnforceBoundaries();
         base.OnLostFocus(e);
     }
 
@@ -92,7 +93,6 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
                 else
                 {
                     ForceTextUpdate();
-                    EnforceBoundaries();
                 }
             }
             else if (change.Property == MinDateProperty || change.Property == MaxDateProperty)
@@ -104,7 +104,9 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
                     {
                         var clamped = ClampDate(SelectedDate);
                         if (clamped != SelectedDate)
+                        {
                             SetCurrentValue(SelectedDateProperty, clamped);
+                        }
                     }
                 }
                 // Always restore calendar boundaries (even if Min>Max, calendar will just ignore invalid range).
