@@ -9,7 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Headless XUnit 12.0.3 is required for xUnit v3 compatibility.
+         It transitively pulls Avalonia 12.0.3, which is ABI-incompatible with the
+         library's compiled AXAML (built against 11.3.14).
+         Headless tests avoid compiled AXAML by using FuncControlTemplate directly,
+         so the runtime mismatch only affects style-loading, which is bypassed.
+         Themes.Fluent is kept at 12.0.3 for consistent resource resolution in headless env. -->
     <PackageReference Include="Avalonia.Headless.XUnit" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.3" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.10.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
