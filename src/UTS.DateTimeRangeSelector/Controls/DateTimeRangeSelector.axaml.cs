@@ -28,7 +28,8 @@ public class DateTimeRangeSelector : TemplatedControl
     public static readonly StyledProperty<DateTime?> FromDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
             nameof(FromDateTime),
-            defaultBindingMode: BindingMode.TwoWay);
+            defaultBindingMode: BindingMode.TwoWay,
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the start of the date/time range (UTC).
@@ -45,7 +46,8 @@ public class DateTimeRangeSelector : TemplatedControl
     public static readonly StyledProperty<DateTime?> ToDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
             nameof(ToDateTime),
-            defaultBindingMode: BindingMode.TwoWay);
+            defaultBindingMode: BindingMode.TwoWay,
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the end of the date/time range (UTC).
@@ -714,6 +716,15 @@ public class DateTimeRangeSelector : TemplatedControl
         oldIsValid: IsValid,
         oldValidationMessage: ValidationMessage
     );
+
+    private static DateTime? CoerceDateTimeToUtc(AvaloniaObject sender, DateTime? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+        return DateTimeNormalization.EnsureUtc(value.Value);
+    }
 }
 
 /// <summary>
