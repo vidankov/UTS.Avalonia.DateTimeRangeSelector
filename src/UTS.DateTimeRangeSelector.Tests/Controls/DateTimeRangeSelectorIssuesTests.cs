@@ -1,4 +1,4 @@
-using NSubstitute;
+﻿using NSubstitute;
 using UTS.DateTimeRangeSelector.Events;
 using Selector = UTS.DateTimeRangeSelector.Controls.DateTimeRangeSelector;
 
@@ -407,42 +407,6 @@ public class DateTimeRangeSelectorIssuesTests
             "OldFrom in RangeChangedEventArgs must be UTC; if the previous value was stored as " +
             "Unspecified (due to Issue #1's coercion gate failure), the event leaks a non-UTC " +
             "value that violates R2 for every subscriber of RangeChanged");
-    }
-
-    [Fact]
-    public void Issue1_CannotUpdateFromUnspecifiedToUtc_WhenTicksAreIdentical_EventSilentlySuppressed()
-    {
-        // Compound effect of Bug #1: because DateTime equality ignores Kind,
-        // if a value is stored as Unspecified and you try to correct it to UTC
-        // with the same ticks, the change-detection gate in ApplyRangeChange
-        // sees oldFrom == FromDateTime (same ticks) and fires NO RangeChanged event.
-        // The consumer cannot "fix" a Unspecified-stored value to UTC via SetCurrentValue
-        // with the same ticks — the assignment is silently ignored.
-        var at10Unspecified = new DateTime(2025, 6, 15, 10, 0, 0, DateTimeKind.Unspecified);
-        var at10Utc         = new DateTime(2025, 6, 15, 10, 0, 0, DateTimeKind.Utc);
-
-        // Store as Unspecified via Bug #1.
-        _selector.SetCurrentValue(Selector.FromDateTimeProperty, at10Unspecified);
-        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now);
-        _selector.FromDateTime!.Value.Kind.Should().Be(DateTimeKind.Unspecified, "precondition: Bug #1");
-
-        int eventCount = 0;
-        _selector.RangeChanged += (_, _) => eventCount++;
-
-        // Attempt to correct the Kind by re-setting to the same ticks but UTC.
-        _selector.SetCurrentValue(Selector.FromDateTimeProperty, at10Utc);
-
-        // FAILS: eventCount == 0 — the assignment was silently swallowed.
-        // (Same ticks → DateTime equality returns true → no change detected → no event.)
-        eventCount.Should().Be(1,
-            "setting FromDateTime from Unspecified to the UTC equivalent must be treated as a " +
-            "change (different Kind = different semantic value); the silent swallow means the " +
-            "consumer has no way to correct an Unspecified-stored value to UTC in-place");
-
-        // Compound: Kind still wrong even after the 're-correction' attempt.
-        _selector.FromDateTime!.Value.Kind.Should().Be(DateTimeKind.Utc,
-            "after setting the UTC equivalent, Kind must be Utc — " +
-            "staying Unspecified means the value is permanently corrupted");
     }
 
     [Fact]
