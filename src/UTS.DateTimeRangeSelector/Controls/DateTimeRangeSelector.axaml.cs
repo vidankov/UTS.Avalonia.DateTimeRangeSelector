@@ -19,8 +19,8 @@ namespace UTS.DateTimeRangeSelector.Controls;
 [TemplatePart("PART_ToPanel", typeof(DateTimePickerPanel))]
 public class DateTimeRangeSelector : TemplatedControl
 {
-    private readonly BehaviorSubject<DateTimeRange> _rangeSubject;
-    private readonly BehaviorSubject<ValidationResult> _validationSubject;
+    private readonly ReplaySubject<DateTimeRange> _rangeSubject;
+    private readonly ReplaySubject<ValidationResult> _validationSubject;
 
     /// <summary>
     /// Defines the <see cref="FromDateTime"/> property.
@@ -287,8 +287,8 @@ public class DateTimeRangeSelector : TemplatedControl
     {
         _applyPresetCommand = new PresetCommand(ApplyPreset, canExecute: () => ShowPresets);
 
-        _rangeSubject = new(new(FromDateTime, ToDateTime));
-        _validationSubject = new(new(IsValid, ValidationMessage));
+        _rangeSubject = new ReplaySubject<DateTimeRange>(1);
+        _validationSubject = new ReplaySubject<ValidationResult>(1);
     }
 
     /// <summary>
