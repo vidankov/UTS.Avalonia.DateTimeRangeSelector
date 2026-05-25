@@ -306,9 +306,9 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
-    /// Synchronizes the individual time components and the date picker with the new value of 
-    /// <see cref="SelectedDateTime"/>. If the value has changed, raises the 
-    /// <see cref="SelectedDateTimeChanged"/> routed event.
+    /// Called whenever <see cref="SelectedDateTime"/> changes.
+    /// Updates the time/date components under the <see cref="_updatingComponents"/> guard
+    /// and raises the <see cref="SelectedDateTimeChanged"/> routed event.
     /// </summary>
     /// <param name="oldValue">The previous <see cref="SelectedDateTime"/> value, or null if no value was previously set.</param>
     /// <param name="newValue">The new <see cref="SelectedDateTime"/> value, or null if the value was cleared.</param>
@@ -322,25 +322,7 @@ public class DateTimePickerPanel : TemplatedControl
         _updatingComponents = true;
         try
         {
-            if (newValue.HasValue)
-            {
-                var dt = newValue.Value;
-                Hour = dt.Hour;
-                Minute = dt.Minute;
-                Second = dt.Second;
-                Millisecond = dt.Millisecond;
-                SelectedDate = dt.Date;
-            }
-            else
-            {
-                Hour = 0;
-                Minute = 0;
-                Second = 0;
-                Millisecond = 0;
-                SelectedDate = null;
-            }
-
-            _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+            ApplyComponentsFromDateTime(SelectedDateTime);
         }
         finally
         {
@@ -385,11 +367,9 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
-    /// Forces synchronization of the individual time components (<see cref="Hour"/>, <see cref="Minute"/>,
-    /// <see cref="Second"/>, <see cref="Millisecond"/>) and <see cref="SelectedDate"/> with the current
-    /// value of <see cref="SelectedDateTime"/>. This is necessary because after coercion, 
-    /// <see cref="SelectedDateTime"/> may remain unchanged while the components still hold the
-    /// invalid input values. Calling this method immediately corrects the visual representation.
+    /// Forces the individual time/date components and the calendar to reflect the
+    /// current value of <see cref="SelectedDateTime"/>.
+    /// Protected against reentrant calls via <see cref="_syncingComponents"/>.
     /// </summary>
     private void SyncComponentsFromSelectedDateTime()
     {
@@ -401,24 +381,7 @@ public class DateTimePickerPanel : TemplatedControl
         _syncingComponents = true;
         try
         {
-            var dt = SelectedDateTime;
-            if (dt.HasValue)
-            {
-                Hour = dt.Value.Hour;
-                Minute = dt.Value.Minute;
-                Second = dt.Value.Second;
-                Millisecond = dt.Value.Millisecond;
-                SelectedDate = dt.Value.Date;
-            }
-            else
-            {
-                Hour = 0;
-                Minute = 0;
-                Second = 0;
-                Millisecond = 0;
-                SelectedDate = null;
-            }
-            _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+            ApplyComponentsFromDateTime(SelectedDateTime);
         }
         finally
         {
@@ -426,6 +389,37 @@ public class DateTimePickerPanel : TemplatedControl
         }
     }
 
+    /// <summary>
+    /// Writes the date and time components from the given <paramref name="dateTime"/>
+    /// to <see cref="Hour"/>, <see cref="Minute"/>, <see cref="Second"/>,
+    /// <see cref="Millisecond"/>, <see cref="SelectedDate"/> and synchronises
+    /// <see cref="ConstrainedCalendarDatePicker.SelectedDate"/> on the internal calendar.
+    /// This method does NOT prevent reentrancy — callers must set the appropriate
+    /// suppression flags (<see cref="_updatingComponents"/> or <see cref="_syncingComponents"/>).
+    /// </summary>
+    /// <param name="dateTime">The value to apply, or null to clear all components.</param>
+    private void ApplyComponentsFromDateTime(DateTime? dateTime)
+    {
+        if (dateTime.HasValue)
+        {
+            var dt = dateTime.Value;
+            Hour = dt.Hour;
+            Minute = dt.Minute;
+            Second = dt.Second;
+            Millisecond = dt.Millisecond;
+            SelectedDate = dt.Date;
+        }
+        else
+        {
+            Hour = 0;
+            Minute = 0;
+            Second = 0;
+            Millisecond = 0;
+            SelectedDate = null;
+        }
+
+        _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+    }
 
     /// <summary>
     /// Coerces a <see cref="DateTime"/> value assigned to <see cref="SelectedDateTime"/>.
