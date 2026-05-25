@@ -285,25 +285,7 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     public DateTimeRangeSelector()
     {
-        _applyPresetCommand = new PresetCommand(
-            execute: duration =>
-            {
-                ApplyRangeChange(
-                    action: () =>
-                    {
-                        var (start, end) = CalculateRangeFromAnchor(duration);
-                        SetCurrentValue(FromDateTimeProperty, start);
-                        SetCurrentValue(ToDateTimeProperty, end);
-                        Coerce(FromDateTimeProperty);
-                    },
-                    oldFrom: FromDateTime,
-                    oldTo: ToDateTime,
-                    oldIsValid: IsValid,
-                    oldValidationMessage: ValidationMessage
-                );
-            },
-            canExecute: () => ShowPresets
-        );
+        _applyPresetCommand = new PresetCommand(ApplyPreset, canExecute: () => ShowPresets);
 
         _rangeSubject = new(new(FromDateTime, ToDateTime));
         _validationSubject = new(new(IsValid, ValidationMessage));
@@ -743,7 +725,8 @@ internal class PresetCommand : ICommand
 
     public event EventHandler? CanExecuteChanged;
 
-    public bool CanExecute(object? parameter) => _canExecute() && parameter is TimeSpan;
+    public bool CanExecute(object? parameter) =>
+        _canExecute() && parameter is TimeSpan ts && ts > TimeSpan.Zero;
 
     public void Execute(object? parameter)
     {
