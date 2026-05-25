@@ -331,7 +331,7 @@ public class DateTimeRangeSelector : TemplatedControl
         ApplyRangeChange(
             action: () =>
             {
-                var (start, end) = CalculateRangeFromAnchor(duration);
+                var (start, end) = CalculatePresetRange(duration);
                 SetCurrentValue(FromDateTimeProperty, start);
                 SetCurrentValue(ToDateTimeProperty, end);
                 Coerce(FromDateTimeProperty);
@@ -417,20 +417,22 @@ public class DateTimeRangeSelector : TemplatedControl
     private DateTime GetAnchor() => MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
 
     /// <summary>
-    /// Calculates a time range of the given <paramref name="duration"/> ending at the anchor.
-    /// The start is clamped to <see cref="MinDateTime"/> if a lower bound exists.
+    /// Calculates a time range of the given <paramref name="duration"/> relative to the anchor
+    /// (<see cref="MaxDateTime"/> if set, otherwise the current UTC time).
+    /// If <see cref="MinDateTime"/> is later than the anchor, the range is shifted forward
+    /// so that it starts at <see cref="MinDateTime"/> and ends at Min + duration.
+    /// The returned values are not yet clamped to <see cref="MaxDateTime"/> — 
+    /// that is handled later by <see cref="Coerce"/>.
     /// </summary>
-    /// <param name="duration">The length of the range (positive).</param>
-    /// <returns>A tuple containing the calculated (start, end) values in UTC.</returns>
-    private (DateTime start, DateTime end) CalculateRangeFromAnchor(TimeSpan duration)
+    /// <returns>A tuple containing (start, end) in UTC.</returns>
+    private (DateTime Start, DateTime End) CalculatePresetRange(TimeSpan duration)
     {
-        var end = GetAnchor();
-        var start = end - duration;
-        if (MinDateTime.HasValue && start < MinDateTime.Value)
+        var anchor = GetAnchor(); // MaxDateTime ?? UtcNow
+        if (MinDateTime.HasValue && MinDateTime.Value > anchor)
         {
-            start = MinDateTime.Value;
+            return (MinDateTime.Value, MinDateTime.Value + duration);
         }
-        return (start, end);
+        return (anchor - duration, anchor);
     }
 
     /// <summary>
@@ -664,7 +666,7 @@ public class DateTimeRangeSelector : TemplatedControl
 
             if (!FromDateTime.HasValue && !ToDateTime.HasValue)
             {
-                var (start, end) = CalculateRangeFromAnchor(defaultDuration);
+                var (start, end) = CalculatePresetRange(defaultDuration);
                 SetCurrentValue(FromDateTimeProperty, start);
                 SetCurrentValue(ToDateTimeProperty, end);
             }
