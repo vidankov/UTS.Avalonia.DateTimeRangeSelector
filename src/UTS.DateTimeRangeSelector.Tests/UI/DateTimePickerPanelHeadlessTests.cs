@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using UTS.DateTimeRangeSelector.Controls;
@@ -76,18 +76,9 @@ public class DateTimePickerPanelHeadlessTests
         // Act: apply the template manually — triggers OnApplyTemplate.
         panel.ApplyTemplate();
 
-        // The event was raised (this assertion documents the current observable
-        // behaviour, not the desired one; it is expected to PASS).
-        captured.Should().NotBeNull(
-            "OnApplyTemplate currently fires SelectedDateTimeChanged unconditionally " +
-            "when SelectedDateTime has a value; this assertion documents that the event fires");
-
-        // FAILS: OldValue IS null — but the value was set before template application.
-        // OldValue should reflect the actual previous state or the event must not fire.
-        captured!.OldValue.Should().NotBeNull(
-            "OldValue must not be null when SelectedDateTime was already set before " +
-            "template application; firing with null OldValue makes the event look like a " +
-            "brand-new selection and misleads subscribers about what actually changed (Issue #4)");
+        captured.Should().BeNull(
+            "OnApplyTemplate must NOT fire SelectedDateTimeChanged when the value has not changed; " +
+            "a pre-set value should be synchronised to components without raising a change notification");
     }
 
     [AvaloniaFact]
