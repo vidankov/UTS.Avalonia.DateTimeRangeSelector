@@ -466,10 +466,9 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
-    /// Called when the control template is applied. Forces synchronization of the
-    /// individual time/date components with the current value of <see cref="SelectedDateTime"/>.
-    /// If a value was set before the template was loaded, raises the 
-    /// <see cref="SelectedDateTimeChanged"/> event with a null old value.
+    /// Called when the control template is applied. Synchronizes the individual
+    /// time/date components (<see cref="SelectedDate"/>, <see cref="Hour"/>, etc.)
+    /// and the internal calendar with the current value of <see cref="SelectedDateTime"/>.
     /// </summary>
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -477,9 +476,6 @@ public class DateTimePickerPanel : TemplatedControl
 
         _calendar = e.NameScope.Find<ConstrainedCalendarDatePicker>("PART_Calendar");
 
-        if (SelectedDateTime.HasValue)
-        {
-            OnSelectedDateTimeChanged(null, SelectedDateTime.Value);
-        }
+        SyncComponentsFromSelectedDateTime();
     }
 }
