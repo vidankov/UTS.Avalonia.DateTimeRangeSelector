@@ -1,9 +1,12 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Layout;
 using NSubstitute;
+using UTS.DateTimeRangeSelector.Controls;
 using Selector = UTS.DateTimeRangeSelector.Controls.DateTimeRangeSelector;
 
 namespace UTS.DateTimeRangeSelector.Tests.UI;
@@ -222,5 +225,90 @@ public class DateTimeRangeSelectorTemplateTests
             "after restoring valid bounds the control must re-apply defaults or recover the range; " +
             "leaving From=null with a fully enabled UI is a misleading state (Issue #6)");
         selector.IsValid.Should().BeTrue();
+    }
+
+    // -----------------------------------------------------------------------
+    // R26-17 — cross-panel binding and layout backlog
+    // -----------------------------------------------------------------------
+
+    [AvaloniaFact]
+    public void R26_17_CrossPanel_InlinedTemplate_FromCanExceedToUntilParentCoerces()
+    {
+        DateTimePickerPanel? fromPanel = null;
+        DateTimePickerPanel? toPanel = null;
+
+        var template = new FuncControlTemplate<Selector>((selector, _) =>
+        {
+            fromPanel = new DateTimePickerPanel();
+            fromPanel.Bind(
+                DateTimePickerPanel.SelectedDateTimeProperty,
+                new Binding(nameof(Selector.FromDateTime))
+                {
+                    Source = selector,
+                    Mode = BindingMode.TwoWay
+                });
+
+            toPanel = new DateTimePickerPanel();
+            toPanel.Bind(
+                DateTimePickerPanel.SelectedDateTimeProperty,
+                new Binding(nameof(Selector.ToDateTime))
+                {
+                    Source = selector,
+                    Mode = BindingMode.TwoWay
+                });
+
+            return new StackPanel { Children = { fromPanel, toPanel } };
+        });
+
+        var selector = new Selector { Template = template, TimeProvider = MakeTimeProvider() };
+        selector.ApplyTemplate();
+
+        fromPanel.Should().NotBeNull();
+        toPanel.Should().NotBeNull();
+
+        selector.ToDateTime = Now;
+        selector.FromDateTime = Now.AddHours(2);
+
+        selector.FromDateTime!.Value.Should().BeOnOrBefore(selector.ToDateTime!.Value,
+            "parent selector must coerce inverted From/To even when panels are bound independently");
+    }
+
+    /// <summary>
+    /// Mirrors production <c>DateTimePickerPanel</c> template MinWidth layout (calendar 150 + four spinners 110 each).
+    /// Compiled library AXAML cannot load in headless 12.x runtime; inline template preserves width proof.
+    /// </summary>
+    [AvaloniaFact]
+    public void R26_17_PanelLayout_DesiredWidthShouldBeUnder600()
+    {
+        var panel = new DateTimePickerPanel
+        {
+            Template = new FuncControlTemplate<DateTimePickerPanel>((_, _) =>
+            {
+                var row = new StackPanel { Orientation = Orientation.Horizontal };
+                row.Children.Add(new ConstrainedCalendarDatePicker { MinWidth = 150 });
+                // Placeholders only — TextBlock measure needs IFontManagerImpl in headless.
+                row.Children.Add(new Panel { MinWidth = 15, Height = 16, Margin = new Thickness(5, 0) });
+                for (var i = 0; i < 4; i++)
+                {
+                    row.Children.Add(new NumericUpDown
+                    {
+                        MinWidth = 110,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    });
+                }
+
+                row.Children.Add(new Panel { MinWidth = 25, Height = 16, Margin = new Thickness(2, 0, 5, 0) });
+                row.Children.Add(new Panel { MinWidth = 35, Height = 16, Margin = new Thickness(2, 0, 5, 0) });
+                row.Children.Add(new Panel { MinWidth = 30, Height = 16, Margin = new Thickness(2, 0, 5, 0) });
+                row.Children.Add(new Panel { MinWidth = 25, Height = 16, Margin = new Thickness(2, 0, 0, 0) });
+                return row;
+            })
+        };
+
+        panel.ApplyTemplate();
+        panel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+
+        panel.DesiredSize.Width.Should().BeLessThan(600,
+            "compact host layouts need a panel under ~600px; current production MinWidth stack is ~755px");
     }
 }

@@ -432,4 +432,110 @@ public class DateTimeRangeSelectorIssuesTests
             "RangeChanges observable must always carry UTC From values; " +
             "Unspecified Kind in the snapshot means the coercion contract is broken end-to-end");
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // R26-5 — AreBoundsValid true while IsValid false after contradictory bounds restored
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void R26_5_AfterBoundsRestored_AreBoundsValidTrue_WhileIsValidFalse_AndValidationMessageNonNull()
+    {
+        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
+        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now);
+
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
+
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddHours(5));
+
+        _selector.AreBoundsValid.Should().BeTrue(
+            "valid bounds must re-enable the template via AreBoundsValid");
+        _selector.IsValid.Should().BeFalse(
+            "From/To were wiped and not recovered — control must not report valid");
+        _selector.ValidationMessage.Should().NotBeNullOrEmpty(
+            "callers need a validation message when the range is empty but bounds are valid");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // R26-7 — Preset duration silently shortened when clamp eats into requested window
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void R26_7_ApplyPreset_WhenStartClampsToMin_DurationShouldBePreservedOrInvalidated()
+    {
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddMinutes(-30));
+
+        _selector.ApplyPreset(TimeSpan.FromHours(1));
+
+        var duration = _selector.ToDateTime - _selector.FromDateTime;
+        var isValidWithMessage = !_selector.IsValid && !string.IsNullOrEmpty(_selector.ValidationMessage);
+
+        (duration == TimeSpan.FromHours(1) || isValidWithMessage).Should().BeTrue(
+            "ApplyPreset('Last 1h') must produce a 1-hour window or explicit invalid state; " +
+            "must not silently shrink to 30 minutes when Min is anchor - 30min");
+    }
+
+    [Fact]
+    public void R26_7_ApplyPreset_WhenEndClampsToMax_DurationShouldBePreservedOrInvalidated()
+    {
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddMinutes(-15));
+
+        _selector.ApplyPreset(TimeSpan.FromHours(1));
+
+        var duration = _selector.ToDateTime - _selector.FromDateTime;
+        var isValidWithMessage = !_selector.IsValid && !string.IsNullOrEmpty(_selector.ValidationMessage);
+
+        (duration == TimeSpan.FromHours(1) || isValidWithMessage).Should().BeTrue(
+            "ApplyPreset('Last 1h') must produce a 1-hour window or explicit invalid state; " +
+            "must not silently shrink when Max narrows the anchor");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // R26-8 — ReplaySubject never seeded; cold subscribe receives nothing
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void R26_8_RangeChanges_SubscribeOnConstruction_ShouldReplayCurrentRange()
+    {
+        var selector = new Selector { TimeProvider = _timeProvider };
+        var received = new List<DateTimeRange>();
+
+        using var _ = selector.RangeChanges.Subscribe(received.Add);
+
+        received.Should().NotBeEmpty(
+            "RangeChanges must replay the latest range to new subscribers per XML contract");
+    }
+
+    [Fact]
+    public void R26_8_ValidationChanges_SubscribeOnConstruction_ShouldReplayCurrentValidation()
+    {
+        var selector = new Selector { TimeProvider = _timeProvider };
+        var received = new List<ValidationResult>();
+
+        using var _ = selector.ValidationChanges.Subscribe(received.Add);
+
+        received.Should().NotBeEmpty(
+            "ValidationChanges must replay the latest validation state to new subscribers per XML contract");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // R26-12 — ShowPresets gates CanExecute but not ApplyPreset (design asymmetry)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    [Trait("Category", "DesignDecision")]
+    public void R26_12_ShowPresetsFalse_CanExecuteReturnsFalse_ButApplyPresetStillApplies()
+    {
+        _selector.ShowPresets = false;
+        var before = _selector.FromDateTime;
+
+        _selector.ApplyPresetCommand.CanExecute(TimeSpan.FromHours(1)).Should().BeFalse(
+            "command CanExecute is gated on ShowPresets");
+
+        var act = () => _selector.ApplyPreset(TimeSpan.FromHours(1));
+        act.Should().NotThrow("ApplyPreset is not gated on ShowPresets in current API");
+
+        _selector.FromDateTime.Should().NotBe(before,
+            "documents asymmetry: public ApplyPreset still mutates range when presets are hidden");
+    }
 }

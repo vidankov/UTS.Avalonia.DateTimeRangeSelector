@@ -256,4 +256,22 @@ public class DateTimeRangeSelectorTests
         // Assert
         eventRaised.Should().BeTrue("изменение валидности должно порождать ValidationChanged");
     }
+
+    /// <summary>
+    /// Documents <see cref="Selector.SetRange"/> coercion intent: sets <c>From</c> then <c>To</c>, then
+    /// <c>Coerce(FromDateTimeProperty)</c>. The intermediate <c>To</c> assignment runs coercion with
+    /// <c>ToDateTimeProperty</c> intent, so inverted endpoints pull <c>From</c> down to <c>To</c> (not the reverse).
+    /// </summary>
+    [Fact]
+    public void R26_9_SetRange_InvertedEndpoints_FromIsAdjustedToMatchTo()
+    {
+        var later = Now.AddHours(2);
+        var earlier = Now.AddHours(-1);
+
+        _selector.SetRange(later, earlier);
+
+        _selector.FromDateTime.Should().Be(earlier,
+            "SetRange assigns To after From; inverted range coerces with To intent on the To assignment");
+        _selector.ToDateTime.Should().Be(earlier);
+    }
 }
