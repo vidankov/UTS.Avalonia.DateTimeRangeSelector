@@ -63,11 +63,12 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     public static readonly StyledProperty<DateTime?> MinDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
-            nameof(MinDateTime));
+            nameof(MinDateTime),
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the minimum allowed date and time for the range.
-    /// Null means no lower limit.
+    /// The value is coerced to UTC. Null means no lower limit.
     /// </summary>
     public DateTime? MinDateTime
     {
@@ -80,11 +81,12 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     public static readonly StyledProperty<DateTime?> MaxDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
-            nameof(MaxDateTime));
+            nameof(MaxDateTime),
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the maximum allowed date and time for the range.
-    /// Null means no upper limit.
+    /// The value is coerced to UTC. Null means no upper limit.
     /// </summary>
     public DateTime? MaxDateTime
     {
