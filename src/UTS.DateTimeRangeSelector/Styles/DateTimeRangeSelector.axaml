@@ -12,7 +12,7 @@
 	-->
 
 	<Design.PreviewWith>
-		<StackPanel Width="800" Height="150" Spacing="10">
+		<StackPanel Width="750" Height="200" Margin="5">
 			<StackPanel Background="{DynamicResource SystemRegionBrush}">
 				<controls:DateTimeRangeSelector />
 			</StackPanel>
@@ -76,6 +76,11 @@
 						</StackPanel>
 
 					</StackPanel>
+
+					<TextBlock Text="{Binding ValidationMessage, RelativeSource={RelativeSource TemplatedParent}}"
+							   Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+							   IsVisible="{Binding !IsValid, RelativeSource={RelativeSource TemplatedParent}}"
+							   FontStyle="Italic"/>
 
 				</StackPanel>
 			</ControlTemplate>
