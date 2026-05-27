@@ -90,10 +90,6 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
                 {
                     SetCurrentValue(SelectedDateProperty, clamped);
                 }
-                else
-                {
-                    ForceTextUpdate();
-                }
             }
             else if (change.Property == MinDateProperty || change.Property == MaxDateProperty)
             {
@@ -116,6 +112,14 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
         finally
         {
             _isUpdating = false;
+        }
+
+        // Ensure the text box is synchronised after any property change that affects the display.
+        if (change.Property == SelectedDateProperty ||
+            change.Property == MinDateProperty ||
+            change.Property == MaxDateProperty)
+        {
+            ForceTextUpdate();
         }
     }
 
@@ -159,6 +163,8 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
 
     /// <summary>
     /// Forces the internal TextBox to display <see cref="SelectedDate"/> using the correct format.
+    /// Called after changes to <see cref="SelectedDate"/>, <see cref="MinDate"/>, or <see cref="MaxDate"/>
+    /// to guarantee that the displayed text matches the clamped value, even when reentrant updates occur.
     /// </summary>
     private void ForceTextUpdate()
     {
