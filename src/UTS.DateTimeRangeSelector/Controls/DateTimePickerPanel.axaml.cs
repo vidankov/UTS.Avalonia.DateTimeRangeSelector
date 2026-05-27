@@ -157,12 +157,15 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _hour;
-    /// <summary>Gets or sets the hours component (0-23).</summary>
+    /// <summary>
+    /// Gets or sets the hours component. Values outside 0..23 are clamped to that range.
+    /// </summary>
     public int Hour
     {
         get => _hour;
         set
         {
+            value = Math.Clamp(value, 0, 23);
             if (value == _hour)
             {
                 return;
@@ -186,12 +189,15 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _minute;
-    /// <summary>Gets or sets the minutes component (0-59).</summary>
+    /// <summary>
+    /// Gets or sets the minutes component. Values outside 0..59 are clamped to that range.
+    /// </summary>
     public int Minute
     {
         get => _minute;
         set
         {
+            value = Math.Clamp(value, 0, 59);
             if (value == _minute)
             {
                 return;
@@ -215,12 +221,15 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _second;
-    /// <summary>Gets or sets the seconds component (0-59).</summary>
+    /// <summary>
+    /// Gets or sets the seconds component. Values outside 0..59 are clamped to that range.
+    /// </summary>
     public int Second
     {
         get => _second;
         set
         {
+            value = Math.Clamp(value, 0, 59);
             if (value == _second)
             {
                 return;
@@ -244,12 +253,15 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _millisecond;
-    /// <summary>Gets or sets the milliseconds component (0-999).</summary>
+    /// <summary>
+    /// Gets or sets the milliseconds component. Values outside 0..999 are clamped to that range.
+    /// </summary>
     public int Millisecond
     {
         get => _millisecond;
         set
         {
+            value = Math.Clamp(value, 0, 999);
             if (value == _millisecond)
             {
                 return;
