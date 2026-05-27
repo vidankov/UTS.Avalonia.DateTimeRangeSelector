@@ -84,4 +84,36 @@ public class ConstrainedCalendarDatePickerHeadlessTests
             max.ToString(DateFormat),
             "empty text must be refreshed to clamped SelectedDate, not left stale or blank");
     }
+
+    [AvaloniaFact]
+    public void SelectedDateChange_ShouldUpdateCalendarDisplayDate()
+    {
+        var initialDate = new DateTime(2026, 5, 20);
+        var newDate = new DateTime(2026, 6, 3);
+        Calendar? calendar = null;
+
+        var picker = new ConstrainedCalendarDatePicker
+        {
+            MinDate = new DateTime(2026, 5, 1),
+            MaxDate = new DateTime(2026, 6, 30),
+            SelectedDate = initialDate,
+            Template = new FuncControlTemplate<ConstrainedCalendarDatePicker>((_, scope) =>
+            {
+                var textBox = new TextBox { Name = "PART_TextBox" };
+                scope.Register("PART_TextBox", textBox);
+                calendar = new Calendar { Name = "PART_Calendar" };
+                scope.Register("PART_Calendar", calendar);
+                var panel = new Panel { Children = { textBox, calendar } };
+                return panel;
+            })
+        };
+
+        picker.ApplyTemplate();
+
+        picker.SelectedDate = newDate;
+
+        calendar.Should().NotBeNull();
+        calendar!.DisplayDate.Should().Be(newDate.Date,
+            "DisplayDate must reflect the month of the newly selected date");
+    }
 }
