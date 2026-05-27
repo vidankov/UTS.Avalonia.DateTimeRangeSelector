@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using UTS.DateTimeRangeSelector.Controls;
@@ -24,9 +24,10 @@ public class ConstrainedCalendarDatePickerHeadlessTests
             MaxDate = maxDate,
             SelectedDateFormat = CalendarDatePickerFormat.Custom,
             CustomDateFormatString = DateFormat,
-            Template = new FuncControlTemplate<ConstrainedCalendarDatePicker>((_, _) =>
+            Template = new FuncControlTemplate<ConstrainedCalendarDatePicker>((_, scope) =>
             {
                 partTextBox = new TextBox { Name = "PART_TextBox" };
+                scope.Register("PART_TextBox", partTextBox);
                 return partTextBox;
             })
         };
