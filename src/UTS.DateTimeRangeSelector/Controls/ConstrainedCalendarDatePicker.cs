@@ -64,7 +64,6 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
     {
         // Before base class finalises the selection, correct the text if it's out of bounds.
         CorrectInputIfNeeded();
-        EnforceBoundaries();
         base.OnLostFocus(e);
     }
 
@@ -105,8 +104,6 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
                         }
                     }
                 }
-                // Always restore calendar boundaries (even if Min>Max, calendar will just ignore invalid range).
-                EnforceBoundaries();
             }
         }
         finally
@@ -114,12 +111,14 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
             _isUpdating = false;
         }
 
-        // Ensure the text box is synchronised after any property change that affects the display.
+        // Ensure the text box is synchronised and the calendar's display boundaries/date
+        // reflect the current state after any property change that affects the display.
         if (change.Property == SelectedDateProperty ||
             change.Property == MinDateProperty ||
             change.Property == MaxDateProperty)
         {
             ForceTextUpdate();
+            EnforceBoundaries();
         }
     }
 
@@ -194,6 +193,11 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
 
         _calendar.DisplayDateStart = MinDate?.Date;
         _calendar.DisplayDateEnd = MaxDate?.Date;
+
+        if (SelectedDate.HasValue)
+        {
+            _calendar.DisplayDate = SelectedDate.Value.Date;
+        }
     }
 
     private DateTime? ClampDate(DateTime? date)
