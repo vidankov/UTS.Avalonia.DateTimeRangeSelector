@@ -59,7 +59,11 @@
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
-														  DateTimeFormat="{TemplateBinding DateTimeFormat}"/>
+														  DateTimeFormat="{TemplateBinding DateTimeFormat}"
+														  HourSuffix="{TemplateBinding HourSuffix}"
+														  MinuteSuffix="{TemplateBinding MinuteSuffix}"
+														  SecondSuffix="{TemplateBinding SecondSuffix}"
+														  MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
 						</StackPanel>
 
 						<StackPanel Orientation="Vertical">
@@ -72,7 +76,11 @@
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
-														  DateTimeFormat="{TemplateBinding DateTimeFormat}"/>
+														  DateTimeFormat="{TemplateBinding DateTimeFormat}"
+														  HourSuffix="{TemplateBinding HourSuffix}"
+														  MinuteSuffix="{TemplateBinding MinuteSuffix}"
+														  SecondSuffix="{TemplateBinding SecondSuffix}"
+														  MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
 						</StackPanel>
 
 					</StackPanel>

@@ -275,6 +275,78 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="HourSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> HourSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(HourSuffix),
+            defaultValue: "ч.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the hours control.
+    /// The default is "ч.".
+    /// </summary>
+    public string HourSuffix
+    {
+        get => GetValue(HourSuffixProperty);
+        set => SetValue(HourSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MinuteSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> MinuteSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(MinuteSuffix),
+            defaultValue: "мин.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the minutes control.
+    /// The default is "мин.".
+    /// </summary>
+    public string MinuteSuffix
+    {
+        get => GetValue(MinuteSuffixProperty);
+        set => SetValue(MinuteSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="SecondSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> SecondSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(SecondSuffix),
+            defaultValue: "сек.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the seconds control.
+    /// The default is "сек.".
+    /// </summary>
+    public string SecondSuffix
+    {
+        get => GetValue(SecondSuffixProperty);
+        set => SetValue(SecondSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MillisecondSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> MillisecondSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(MillisecondSuffix),
+            defaultValue: "мс.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the milliseconds control.
+    /// The default is "мс.".
+    /// </summary>
+    public string MillisecondSuffix
+    {
+        get => GetValue(MillisecondSuffixProperty);
+        set => SetValue(MillisecondSuffixProperty, value);
+    }
+
+    /// <summary>
     /// Identifies the <see cref="SelectedDateTimeChanged"/> routed event.
     /// </summary>
     public static readonly RoutedEvent<SelectedDateTimeChangedEventArgs> SelectedDateTimeChangedEvent =

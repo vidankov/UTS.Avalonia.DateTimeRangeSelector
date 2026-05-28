@@ -33,8 +33,8 @@
 	-->
 	<!--
 	<ControlTheme x:Key="{x:Type controls:ConstrainedCalendarDatePicker}"
-				  TargetType="controls:ConstrainedCalendarDatePicker"
-				  BasedOn="{StaticResource {x:Type CalendarDatePicker}}">
+	TargetType="controls:ConstrainedCalendarDatePicker"
+	BasedOn="{StaticResource {x:Type CalendarDatePicker}}">
 	</ControlTheme>
 	-->
 
@@ -44,7 +44,7 @@
 
 				<StackPanel Orientation="Horizontal">
 
-					<!-- Выбор даты -->
+					<!-- Date selection -->
 					<controls:ConstrainedCalendarDatePicker x:Name="PART_Calendar"
 															SelectedDate="{Binding SelectedDate,
 															RelativeSource={RelativeSource TemplatedParent},
@@ -60,7 +60,7 @@
 
 					<TextBlock Text=" - " VerticalAlignment="Center" Margin="5,0" />
 
-					<!-- Часы -->
+					<!-- Hours -->
 					<NumericUpDown Value="{Binding Hour,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
@@ -68,9 +68,10 @@
 					Minimum="0" Maximum="23" Increment="1" FormatString="00"
 					MinWidth="110" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="ч." VerticalAlignment="Center" Margin="2,0,5,0" />
+					<TextBlock Text="{TemplateBinding HourSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,5,0" />
 
-					<!-- Минуты -->
+					<!-- Minutes -->
 					<NumericUpDown Value="{Binding Minute,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
@@ -78,9 +79,10 @@
 					Minimum="0" Maximum="59" Increment="1" FormatString="00"
 					MinWidth="110" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="мин." VerticalAlignment="Center" Margin="2,0,5,0" />
+					<TextBlock Text="{TemplateBinding MinuteSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,5,0" />
 
-					<!-- Секунды -->
+					<!-- Seconds -->
 					<NumericUpDown Value="{Binding Second,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
@@ -88,9 +90,10 @@
 					Minimum="0" Maximum="59" Increment="1" FormatString="00"
 					MinWidth="110" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="сек." VerticalAlignment="Center" Margin="2,0,5,0" />
+					<TextBlock Text="{TemplateBinding SecondSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,5,0" />
 
-					<!-- Миллисекунды -->
+					<!-- Milliseconds -->
 					<NumericUpDown Value="{Binding Millisecond,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
@@ -98,7 +101,8 @@
 					Minimum="0" Maximum="999" Increment="10" FormatString="000"
 					MinWidth="110" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="мс." VerticalAlignment="Center" Margin="2,0,0,0" />
+					<TextBlock Text="{TemplateBinding MillisecondSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,0,0" />
 
 				</StackPanel>
 
