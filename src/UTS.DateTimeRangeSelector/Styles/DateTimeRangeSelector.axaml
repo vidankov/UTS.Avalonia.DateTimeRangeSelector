@@ -50,7 +50,7 @@
 					<StackPanel Orientation="{TemplateBinding Orientation}" Spacing="15">
 
 						<StackPanel Orientation="Vertical">
-							<TextBlock Text="From:" FontWeight="SemiBold" Margin="0,0,0,5" />
+							<TextBlock Text="{TemplateBinding FromLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
 							<controls:DateTimePickerPanel x:Name="PART_FromPanel"
 														  SelectedDateTime="{Binding FromDateTime,
 																			 RelativeSource={RelativeSource TemplatedParent},
@@ -63,7 +63,7 @@
 						</StackPanel>
 
 						<StackPanel Orientation="Vertical">
-							<TextBlock Text="To:" FontWeight="SemiBold" Margin="0,0,0,5" />
+							<TextBlock Text="{TemplateBinding ToLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
 							<controls:DateTimePickerPanel x:Name="PART_ToPanel"
 														  SelectedDateTime="{Binding ToDateTime,
 																			 RelativeSource={RelativeSource TemplatedParent},

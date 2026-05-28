@@ -63,6 +63,42 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="FromLabel"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> FromLabelProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(FromLabel),
+            defaultValue: "From:");
+
+    /// <summary>
+    /// Gets or sets the label text for the From date-time panel.
+    /// The default is "From:".
+    /// </summary>
+    public string FromLabel
+    {
+        get => GetValue(FromLabelProperty);
+        set => SetValue(FromLabelProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="ToLabel"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> ToLabelProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(ToLabel),
+            defaultValue: "To:");
+
+    /// <summary>
+    /// Gets or sets the label text for the To date-time panel.
+    /// The default is "To:".
+    /// </summary>
+    public string ToLabel
+    {
+        get => GetValue(ToLabelProperty);
+        set => SetValue(ToLabelProperty, value);
+    }
+
+    /// <summary>
     /// Defines the <see cref="MinDateTime"/> property.
     /// </summary>
     public static readonly StyledProperty<DateTime?> MinDateTimeProperty =
