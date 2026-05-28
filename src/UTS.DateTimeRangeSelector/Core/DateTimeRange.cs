@@ -11,9 +11,10 @@ public record DateTimeRange(DateTime? From, DateTime? To)
 
     /// <summary>
     /// Gets the duration of the range if both <see cref="From"/> and <see cref="To"/> are set
-    /// and <see cref="From"/> is not later than <see cref="To"/>; otherwise, null.
+    /// and <see cref="From"/> is strictly less than <see cref="To"/>; otherwise, null.
+    /// A point-in-time range (From equals To) is considered to have no duration.
     /// </summary>
-    public TimeSpan? Duration => From.HasValue && To.HasValue && To.Value >= From.Value
+    public TimeSpan? Duration => From.HasValue && To.HasValue && To.Value > From.Value
         ? To.Value - From.Value : null;
 
     /// <summary>
