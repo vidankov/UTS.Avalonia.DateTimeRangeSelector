@@ -20,4 +20,30 @@ public record DateTimeRange(DateTime? From, DateTime? To)
     /// An empty range with no boundaries set.
     /// </summary>
     public static DateTimeRange Empty => empty;
+
+
+    /// <inheritdoc />
+    public virtual bool Equals(DateTimeRange? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        DateTime? from1 = Normalize(From);
+        DateTime? to1 = Normalize(To);
+        DateTime? from2 = Normalize(other.From);
+        DateTime? to2 = Normalize(other.To);
+
+        return Nullable.Equals(from1, from2) && Nullable.Equals(to1, to2);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var from = Normalize(From);
+        var to = Normalize(To);
+        return HashCode.Combine(from, to);
+    }
+
+    private static DateTime? Normalize(DateTime? dt)
+        => dt.HasValue ? DateTimeNormalization.EnsureUtc(dt.Value) : null;
 }
