@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
@@ -21,6 +22,9 @@ public class DateTimeRangeSelector : TemplatedControl
 {
     private readonly ReplaySubject<DateTimeRange> _rangeSubject;
     private readonly ReplaySubject<ValidationResult> _validationSubject;
+
+    private DateTimePickerPanel? _fromPanel;
+    private DateTimePickerPanel? _toPanel;
 
     /// <summary>
     /// Defines the <see cref="FromDateTime"/> property.
@@ -646,6 +650,9 @@ public class DateTimeRangeSelector : TemplatedControl
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
+
+        _fromPanel = e.NameScope.Find<DateTimePickerPanel>("PART_FromPanel");
+        _toPanel = e.NameScope.Find<DateTimePickerPanel>("PART_ToPanel");
 
         if (!_defaultsApplied)
         {
