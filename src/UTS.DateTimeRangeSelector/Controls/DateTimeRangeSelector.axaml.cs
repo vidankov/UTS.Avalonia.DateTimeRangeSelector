@@ -166,6 +166,25 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="TimeProvider"/> property.
+    /// </summary>
+    public static readonly StyledProperty<TimeProvider?> TimeProviderProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, TimeProvider?>(
+            nameof(TimeProvider),
+            defaultValue: TimeProvider.System);
+
+    /// <summary>
+    /// Gets or sets the <see cref="System.TimeProvider"/> used to obtain the current UTC time
+    /// when applying presets or initializing the default range.
+    /// The default is <see cref="System.TimeProvider.System"/>.
+    /// </summary>
+    public TimeProvider? TimeProvider
+    {
+        get => GetValue(TimeProviderProperty);
+        set => SetValue(TimeProviderProperty, value);
+    }
+
+    /// <summary>
     /// Defines the read-only <see cref="IsValid"/> property.
     /// </summary>
     public static readonly DirectProperty<DateTimeRangeSelector, bool> IsValidProperty =
@@ -246,15 +265,6 @@ public class DateTimeRangeSelector : TemplatedControl
         add => AddHandler(ValidationChangedEvent, value);
         remove => RemoveHandler(ValidationChangedEvent, value);
     }
-
-    /// <summary>
-    /// Gets or sets the <see cref="System.TimeProvider"/> used to obtain the current UTC time
-    /// when applying presets or initializing the default range.
-    /// </summary>
-    /// <remarks>
-    /// Must be set before the control is fully loaded to take effect during initialization.
-    /// </remarks>
-    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 
     /// <summary>
     /// Defines the <see cref="ApplyPresetCommand"/> property.
@@ -416,7 +426,7 @@ public class DateTimeRangeSelector : TemplatedControl
     /// If <see cref="MaxDateTime"/> is set, it is the anchor;
     /// otherwise, the current UTC time from <see cref="TimeProvider"/>.
     /// </summary>
-    private DateTime GetAnchor() => MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
+    private DateTime GetAnchor() => MaxDateTime ?? (TimeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
 
     /// <summary>
     /// Calculates a time range of the given <paramref name="duration"/> relative to the anchor
