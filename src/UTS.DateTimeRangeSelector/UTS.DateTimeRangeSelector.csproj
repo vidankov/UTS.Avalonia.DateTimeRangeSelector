@@ -34,9 +34,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <AvaloniaXaml Remove="Styles\ConstrainedCalendarDatePicker.axaml" />
-	  <AvaloniaXaml Remove="Styles\DateTimePickerPanel.axaml" />
-	  <AvaloniaXaml Remove="Styles\DateTimeRangeSelector.axaml" />
 	  <AvaloniaXaml Remove="Themes\DateTimeRangeSelectorTheme.axaml" />
 	</ItemGroup>
 
