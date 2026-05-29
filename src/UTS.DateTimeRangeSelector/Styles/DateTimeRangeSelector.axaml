@@ -86,7 +86,7 @@
 					</StackPanel>
 
 					<TextBlock Text="{Binding ValidationMessage, RelativeSource={RelativeSource TemplatedParent}}"
-							   Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+							   Foreground="{DynamicResource SystemErrorTextColor}"
 							   IsVisible="{Binding !IsValid, RelativeSource={RelativeSource TemplatedParent}}"
 							   FontStyle="Italic"/>
 
