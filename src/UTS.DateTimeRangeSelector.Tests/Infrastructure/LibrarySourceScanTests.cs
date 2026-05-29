@@ -1,4 +1,4 @@
-namespace UTS.DateTimeRangeSelector.Tests.Infrastructure;
+﻿namespace UTS.DateTimeRangeSelector.Tests.Infrastructure;
 
 /// <summary>
 /// R26-17 / R26-5 backlog proof tests via source file scans. Skips when repo source is not available.
@@ -58,6 +58,23 @@ public class LibrarySourceScanTests
 
         content.Should().NotContain("AvaloniaXaml Remove=",
             "library style AXAML should participate in compile-time validation");
+    }
+
+    [Fact]
+    [Trait("Category", "FileSystem")]
+    public void R26_17_Scan_Csproj_NoAxamlCompileExclusion_AllowedThemeOnly()
+    {
+        var content = File.ReadAllText(SourceFileLocator.RequireSourceFile(Csproj));
+
+        var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                           .Where(l => l.Contains("AvaloniaXaml Remove="))
+                           .ToList();
+
+        var allowedRemove = "Themes\\DateTimeRangeSelectorTheme.axaml";
+        var forbidden = lines.Where(l => !l.Contains(allowedRemove)).ToList();
+
+        forbidden.Should().BeEmpty(
+            "all AvaloniaXaml Remove entries except for the theme file (with x:Class) must be deleted");
     }
 
     [Fact]
