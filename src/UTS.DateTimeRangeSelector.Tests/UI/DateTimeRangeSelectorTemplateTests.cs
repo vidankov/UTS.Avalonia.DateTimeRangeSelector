@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
@@ -285,14 +285,14 @@ public class DateTimeRangeSelectorTemplateTests
             Template = new FuncControlTemplate<DateTimePickerPanel>((_, _) =>
             {
                 var row = new StackPanel { Orientation = Orientation.Horizontal };
-                row.Children.Add(new ConstrainedCalendarDatePicker { MinWidth = 150 });
+                row.Children.Add(new ConstrainedCalendarDatePicker { MinWidth = 100 });
                 // Placeholders only — TextBlock measure needs IFontManagerImpl in headless.
                 row.Children.Add(new Panel { MinWidth = 15, Height = 16, Margin = new Thickness(5, 0) });
                 for (var i = 0; i < 4; i++)
                 {
                     row.Children.Add(new NumericUpDown
                     {
-                        MinWidth = 110,
+                        MinWidth = 60,
                         HorizontalAlignment = HorizontalAlignment.Center
                     });
                 }
