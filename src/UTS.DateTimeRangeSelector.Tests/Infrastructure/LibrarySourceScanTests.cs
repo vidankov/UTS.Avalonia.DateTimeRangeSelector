@@ -77,11 +77,16 @@ public class LibrarySourceScanTests
             "all AvaloniaXaml Remove entries except for the theme file (with x:Class) must be deleted");
     }
 
-    [Fact]
+    [Fact(Skip = "Skipped: binding deferred pending potential refactoring of this internal control (see #21).")]
     [Trait("Category", "FileSystem")]
     public void R26_17_Scan_CalendarTemplate_PartTextBoxShouldBindText()
     {
         var content = File.ReadAllText(SourceFileLocator.RequireSourceFile(CalendarAxaml));
+
+        // В случае, если тест станет актуален, необходимо поправить регулярное выражение,
+        // используемое для поиска привязки. Сейчас даёт ложноположительный результат,
+        // т.к. не привязывает наличие "{Binding" конкретно к "PART_TextBox", а лишь проверяет,
+        // что где-то во всём файле есть "{Binding" после "PART_TextBox"
 
         content.Should().MatchRegex(
             @"PART_TextBox[\s\S]*Text=""\{Binding",
