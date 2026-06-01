@@ -1,4 +1,7 @@
-﻿using NSubstitute;
+﻿using Avalonia.Controls;
+using Avalonia.Controls.Templates;
+using Avalonia.Headless.XUnit;
+using NSubstitute;
 using UTS.DateTimeRangeSelector.Events;
 using Selector = UTS.DateTimeRangeSelector.Controls.DateTimeRangeSelector;
 
@@ -32,6 +35,17 @@ public class DateTimeRangeSelectorIssuesTests
         _timeProvider.GetUtcNow().Returns(new DateTimeOffset(Now));
 
         _selector = new Selector { TimeProvider = _timeProvider };
+    }
+
+    private static Selector CreateSelectorWithTemplate(TimeProvider timeProvider)
+    {
+        var selector = new Selector
+        {
+            TimeProvider = timeProvider,
+            Template = new FuncControlTemplate<Selector>((_, _) => new Panel())
+        };
+        selector.ApplyTemplate();
+        return selector;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -229,17 +243,12 @@ public class DateTimeRangeSelectorIssuesTests
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // ISSUE #5 — BehaviorSubjects emit stale (null, null) / (false, null)
-    //             to early subscribers BEFORE defaults are applied.
+    // ISSUE #5 — Early subscribers must not see pre-initialization placeholders.
     //
-    // Root cause (DateTimeRangeSelector.axaml.cs ~line 306-308):
-    //   _rangeSubject      = new(new(FromDateTime, ToDateTime));  // null, null
-    //   _validationSubject = new(new(IsValid, ValidationMessage)); // false, null
-    //
-    // BehaviorSubject replays its current value to each new subscriber immediately.
-    // A consumer who subscribes after construction but before OnApplyTemplate sees
-    // the placeholder (null, null) as the first emission, then the real default range.
-    // This violates R12 ("emit final initial range once after initialisation").
+    // Contract (Option B): ReplaySubject(1) starts empty; the first meaningful range
+    // and validation are published after initialization (OnApplyTemplate or ResetToDefaults).
+    // Early subscribers should receive exactly one initialized snapshot, not (null, null)
+    // followed by the default range (R12).
     // ═══════════════════════════════════════════════════════════════════════
 
     [Fact]
@@ -255,7 +264,6 @@ public class DateTimeRangeSelectorIssuesTests
         // Trigger default application (simulates what OnApplyTemplate does).
         selector.ResetToDefaults();
 
-        // FAILS: received[0] is (null, null) — the stale BehaviorSubject seed.
         received.Should().NotContain(
             r => r.From == null && r.To == null,
             "early subscribers must not be exposed to the pre-initialisation (null, null) " +
@@ -274,7 +282,6 @@ public class DateTimeRangeSelectorIssuesTests
         // Trigger default application.
         selector.ResetToDefaults();
 
-        // FAILS: received[0] is (false, null) — the stale BehaviorSubject seed.
         received.Should().NotContain(
             r => !r.IsValid && r.Message == null,
             "early subscribers must not be exposed to the uninitialised (false, null) " +
@@ -290,11 +297,8 @@ public class DateTimeRangeSelectorIssuesTests
         using var sub = selector.RangeChanges.Subscribe(received.Add);
         selector.ResetToDefaults();
 
-        // FAILS: received.Count == 2 (null-null + Now-1h/Now).
         received.Should().HaveCount(1,
-            "R12 requires the initial range to be emitted exactly once; " +
-            "the current BehaviorSubject seed causes two emissions: " +
-            "the stale null-null placeholder and the actual default range");
+            "R12 requires the initial range to be emitted exactly once after initialization");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -491,31 +495,53 @@ public class DateTimeRangeSelectorIssuesTests
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // R26-8 — ReplaySubject never seeded; cold subscribe receives nothing
+    // R26-8 — Replay after initialization (Option B), not at construction
     // ═══════════════════════════════════════════════════════════════════════
 
-    [Fact]
-    public void R26_8_RangeChanges_SubscribeOnConstruction_ShouldReplayCurrentRange()
+    [AvaloniaFact]
+    public void R26_8_RangeChanges_AfterTemplateApplied_ShouldReplayCurrentRange()
     {
-        var selector = new Selector { TimeProvider = _timeProvider };
+        var selector = CreateSelectorWithTemplate(_timeProvider);
         var received = new List<DateTimeRange>();
 
         using var _ = selector.RangeChanges.Subscribe(received.Add);
 
         received.Should().NotBeEmpty(
-            "RangeChanges must replay the latest range to new subscribers per XML contract");
+            "RangeChanges must replay the latest range after template initialization");
+        received[0].From.Should().NotBeNull();
+        received[0].To.Should().NotBeNull();
     }
 
-    [Fact]
-    public void R26_8_ValidationChanges_SubscribeOnConstruction_ShouldReplayCurrentValidation()
+    [AvaloniaFact]
+    public void R26_8_ValidationChanges_AfterTemplateApplied_ShouldReplayCurrentValidation()
     {
-        var selector = new Selector { TimeProvider = _timeProvider };
+        var selector = CreateSelectorWithTemplate(_timeProvider);
         var received = new List<ValidationResult>();
 
         using var _ = selector.ValidationChanges.Subscribe(received.Add);
 
         received.Should().NotBeEmpty(
-            "ValidationChanges must replay the latest validation state to new subscribers per XML contract");
+            "ValidationChanges must replay the latest validation state after template initialization");
+    }
+
+    [AvaloniaFact]
+    public void R26_8_RangeChanges_SubscribeBeforeTemplate_ShouldEmitOneInitializedRange()
+    {
+        var selector = new Selector
+        {
+            TimeProvider = _timeProvider,
+            Template = new FuncControlTemplate<Selector>((_, _) => new Panel())
+        };
+        var received = new List<DateTimeRange>();
+        using var sub = selector.RangeChanges.Subscribe(received.Add);
+
+        selector.ApplyTemplate();
+
+        received.Should().HaveCount(1,
+            "initialization should emit the final initial range exactly once");
+        received[0].From.Should().NotBeNull();
+        received[0].To.Should().NotBeNull();
+        received.Should().NotContain(r => r.From == null && r.To == null);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

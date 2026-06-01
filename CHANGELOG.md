@@ -4,6 +4,11 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [Unreleased]
+
+### Исправлено
+- `RangeChanges` и `ValidationChanges` в `DateTimeRangeSelector` теперь публикуют первый снимок диапазона и валидации после инициализации (`OnApplyTemplate`), без устаревших placeholder-значений при подписке до применения шаблона (R26-8 / #9).
+
 ## [0.0.10] - 20.05.2026
 
 ### Исправлено

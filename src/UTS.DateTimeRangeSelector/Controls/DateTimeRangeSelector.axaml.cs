@@ -390,7 +390,9 @@ public class DateTimeRangeSelector : TemplatedControl
 
     /// <summary>
     /// Gets an observable sequence of <see cref="DateTimeRange"/> values representing
-    /// the current range. The observable is hot and replays the latest value to new subscribers.
+    /// the current range. The observable is hot and replays the latest value to new subscribers
+    /// once the control has initialized (after <see cref="OnApplyTemplate"/> applies defaults).
+    /// Subscribers attached before template application receive the first value when initialization completes.
     /// Changes are distinct (no consecutive duplicates).
     /// </summary>
     public IObservable<DateTimeRange> RangeChanges =>
@@ -398,7 +400,9 @@ public class DateTimeRangeSelector : TemplatedControl
 
     /// <summary>
     /// Gets an observable sequence of <see cref="ValidationResult"/> values representing
-    /// the current validation state. The observable is hot and replays the latest value.
+    /// the current validation state. The observable is hot and replays the latest value
+    /// once the control has initialized (after <see cref="OnApplyTemplate"/> applies defaults).
+    /// Subscribers attached before template application receive the first value when initialization completes.
     /// Changes are distinct (no consecutive duplicates).
     /// </summary>
     public IObservable<ValidationResult> ValidationChanges =>
@@ -767,6 +771,19 @@ public class DateTimeRangeSelector : TemplatedControl
             ApplyDefaultRange();
             _defaultsApplied = true;
         }
+
+        UpdateValidation();
+        PublishObservableState();
+    }
+
+    /// <summary>
+    /// Publishes the current range and validation snapshots to replay subjects.
+    /// Does not raise <see cref="RangeChanged"/> or <see cref="ValidationChanged"/> routed events.
+    /// </summary>
+    private void PublishObservableState()
+    {
+        _rangeSubject.OnNext(new DateTimeRange(FromDateTime, ToDateTime));
+        _validationSubject.OnNext(new ValidationResult(IsValid, ValidationMessage));
     }
 
     /// <summary>
