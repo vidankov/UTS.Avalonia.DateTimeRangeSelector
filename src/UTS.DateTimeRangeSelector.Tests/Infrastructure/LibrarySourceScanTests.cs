@@ -77,19 +77,12 @@ public class LibrarySourceScanTests
 
     [Fact]
     [Trait("Category", "FileSystem")]
-    public void R26_17_Scan_Csproj_NoAxamlCompileExclusion_AllowedThemeOnly()
+    public void R26_17_Scan_Csproj_NoAxamlCompileExclusion()
     {
         var content = File.ReadAllText(SourceFileLocator.RequireSourceFile(Csproj));
 
-        var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-                           .Where(l => l.Contains("AvaloniaXaml Remove="))
-                           .ToList();
-
-        var allowedRemove = "Themes\\DateTimeRangeSelectorTheme.axaml";
-        var forbidden = lines.Where(l => !l.Contains(allowedRemove)).ToList();
-
-        forbidden.Should().BeEmpty(
-            "all AvaloniaXaml Remove entries except for the theme file (with x:Class) must be deleted");
+        content.Should().NotContain("AvaloniaXaml Remove=",
+            "library style AXAML should participate in compile-time validation");
     }
 
     [Fact(Skip = "Skipped: binding deferred pending potential refactoring of this internal control (see #21).")]
