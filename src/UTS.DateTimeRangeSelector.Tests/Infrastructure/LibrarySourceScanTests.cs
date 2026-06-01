@@ -2,6 +2,7 @@
 
 /// <summary>
 /// R26-17 / R26-5 backlog proof tests via source file scans. Skips when repo source is not available.
+/// R26-17 csproj scans: style AXAML must compile; theme-only AvaloniaXaml Remove is allowed.
 /// </summary>
 public class LibrarySourceScanTests
 {
@@ -52,11 +53,25 @@ public class LibrarySourceScanTests
 
     [Fact]
     [Trait("Category", "FileSystem")]
-    public void R26_17_Scan_Csproj_NoAxamlCompileExclusion()
+    public void R26_17_Scan_Csproj_StyleAxamlMustCompile()
     {
         var content = File.ReadAllText(SourceFileLocator.RequireSourceFile(Csproj));
 
-        content.Should().NotContain("AvaloniaXaml Remove=",
+        var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                           .Where(l => l.Contains("AvaloniaXaml Remove="))
+                           .ToList();
+
+        var styleMarkers = new[]
+        {
+            "Styles\\",
+            "Styles\\DateTimeRangeSelector.axaml",
+            "Styles\\DateTimePickerPanel.axaml",
+            "Styles\\ConstrainedCalendarDatePicker.axaml",
+        };
+
+        var forbidden = lines.Where(l => styleMarkers.Any(m => l.Contains(m, StringComparison.Ordinal))).ToList();
+
+        forbidden.Should().BeEmpty(
             "library style AXAML should participate in compile-time validation");
     }
 
