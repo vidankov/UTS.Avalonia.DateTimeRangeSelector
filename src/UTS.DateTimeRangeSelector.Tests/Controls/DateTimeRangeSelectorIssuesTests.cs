@@ -3,6 +3,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using NSubstitute;
 using UTS.DateTimeRangeSelector.Events;
+using UTS.DateTimeRangeSelector.Exceptions;
 using Selector = UTS.DateTimeRangeSelector.Controls.DateTimeRangeSelector;
 
 namespace UTS.DateTimeRangeSelector.Tests.Controls;
@@ -461,37 +462,45 @@ public class DateTimeRangeSelectorIssuesTests
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // R26-7 — Preset duration silently shortened when clamp eats into requested window
+    // R26-7 — Preset duration truncation: strict mode throws,
+    // soft mode clamps silently (AllowPresetTruncation flag)
     // ═══════════════════════════════════════════════════════════════════════
 
     [Fact]
-    public void R26_7_ApplyPreset_WhenStartClampsToMin_DurationShouldBePreservedOrInvalidated()
+    public void ApplyPreset_WhenDurationFitsBounds_ShouldApplyRequestedDuration()
     {
-        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddMinutes(-30));
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, DateTime.MinValue);
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, DateTime.MaxValue);
 
         _selector.ApplyPreset(TimeSpan.FromHours(1));
 
         var duration = _selector.ToDateTime - _selector.FromDateTime;
-        var isValidWithMessage = !_selector.IsValid && !string.IsNullOrEmpty(_selector.ValidationMessage);
-
-        (duration == TimeSpan.FromHours(1) || isValidWithMessage).Should().BeTrue(
-            "ApplyPreset('Last 1h') must produce a 1-hour window or explicit invalid state; " +
-            "must not silently shrink to 30 minutes when Min is anchor - 30min");
+        duration.Should().Be(TimeSpan.FromHours(1),
+            "because the requested 1-hour window fits entirely within the bounds");
     }
 
     [Fact]
-    public void R26_7_ApplyPreset_WhenEndClampsToMax_DurationShouldBePreservedOrInvalidated()
+    public void ApplyPreset_StrictMode_WhenDurationTruncated_ShouldThrowPresetOutOfBoundsException()
     {
-        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddMinutes(-15));
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddMinutes(-30));
+
+        Action act = () => _selector.ApplyPreset(TimeSpan.FromHours(1));
+
+        act.Should().Throw<PresetOutOfBoundsException>()
+            .And.RequestedDuration.Should().Be(TimeSpan.FromHours(1));
+    }
+
+    [Fact]
+    public void ApplyPreset_TruncationAllowed_WhenDurationExceedsBounds_ShouldTruncateSilently()
+    {
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddMinutes(-30));
+        _selector.SetCurrentValue(Selector.AllowPresetTruncationProperty, true);
 
         _selector.ApplyPreset(TimeSpan.FromHours(1));
 
         var duration = _selector.ToDateTime - _selector.FromDateTime;
-        var isValidWithMessage = !_selector.IsValid && !string.IsNullOrEmpty(_selector.ValidationMessage);
-
-        (duration == TimeSpan.FromHours(1) || isValidWithMessage).Should().BeTrue(
-            "ApplyPreset('Last 1h') must produce a 1-hour window or explicit invalid state; " +
-            "must not silently shrink when Max narrows the anchor");
+        duration.Should().Be(TimeSpan.FromMinutes(30));
+        _selector.IsValid.Should().BeTrue();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
