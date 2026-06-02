@@ -171,7 +171,7 @@ public class DateTimePickerPanel : TemplatedControl
                 return;
             }
             SetAndRaise(HourProperty, ref _hour, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -203,7 +203,7 @@ public class DateTimePickerPanel : TemplatedControl
                 return;
             }
             SetAndRaise(MinuteProperty, ref _minute, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -235,7 +235,7 @@ public class DateTimePickerPanel : TemplatedControl
                 return;
             }
             SetAndRaise(SecondProperty, ref _second, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -267,7 +267,7 @@ public class DateTimePickerPanel : TemplatedControl
                 return;
             }
             SetAndRaise(MillisecondProperty, ref _millisecond, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -430,7 +430,7 @@ public class DateTimePickerPanel : TemplatedControl
     /// </summary>
     private void UpdateSelectedDateTime()
     {
-        if (!SelectedDate.HasValue || _syncingComponents)
+        if (_syncingComponents)
         {
             return;
         }
