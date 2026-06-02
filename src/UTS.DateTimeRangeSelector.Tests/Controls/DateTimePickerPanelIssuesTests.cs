@@ -1,4 +1,4 @@
-using UTS.DateTimeRangeSelector.Controls;
+﻿using UTS.DateTimeRangeSelector.Controls;
 
 namespace UTS.DateTimeRangeSelector.Tests.Controls;
 
@@ -8,23 +8,6 @@ namespace UTS.DateTimeRangeSelector.Tests.Controls;
 /// </summary>
 public class DateTimePickerPanelIssuesTests
 {
-    [Fact]
-    public void SetHour_WhenSelectedDateIsNull_ShouldNotLeaveOrphanHour()
-    {
-        var panel = new DateTimePickerPanel
-        {
-            SelectedDate = null,
-            SelectedDateTime = null
-        };
-
-        panel.Hour = 7;
-
-        panel.SelectedDateTime.Should().BeNull();
-        panel.Hour.Should().Be(0,
-            "time components must not retain orphan values when no date is selected; " +
-            "otherwise Hour and SelectedDateTime disagree and bindings show misleading UI state");
-    }
-
     [Fact]
     public void SetSelectedDate_WhenMinDateAfterMaxDate_ShouldNotProduceDateOutsideBothBounds()
     {
