@@ -178,21 +178,29 @@ public class DateTimeRangeSelectorTests
     }
 
     [Fact]
-    public void WhenMinExceedsMax_FromAndToShouldBeNull()
+    public void WhenMinExceedsMax_ValuesArePreserved_And_ControlIsInvalid()
     {
-        // Arrange
-        var min = Now.AddHours(2);
-        var max = Now;
-        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
-        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now.AddHours(1));
+        var min = new DateTime(2026, 06, 03, 12, 0, 0);
+        var max = new DateTime(2026, 06, 03, 15, 0, 0);
 
-        // Act: делаем границы противоречивыми
+        var from = new DateTime(2026, 06, 03, 13, 0, 0);
+        var to = new DateTime(2026, 06, 03, 14, 0, 0);
+
+        var minExcedingMax = new DateTime(2026, 06, 03, 16, 0, 0);
+
         _selector.SetCurrentValue(Selector.MinDateTimeProperty, min);
         _selector.SetCurrentValue(Selector.MaxDateTimeProperty, max);
 
-        // Assert
-        _selector.FromDateTime.Should().BeNull("значения должны сбрасываться при невалидных границах");
-        _selector.ToDateTime.Should().BeNull();
+        _selector.SetCurrentValue(Selector.FromDateTimeProperty, from);
+        _selector.SetCurrentValue(Selector.ToDateTimeProperty, to);
+
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, minExcedingMax);
+
+        _selector.FromDateTime.Should().Be(from, "values must not be wiped when bounds become contradictory");
+        _selector.ToDateTime.Should().Be(to, "values must not be wiped when bounds become contradictory");
+        _selector.AreBoundsValid.Should().BeFalse("Min > Max makes bounds invalid");
+        _selector.IsValid.Should().BeFalse("control must report invalid state when bounds are contradictory");
+        _selector.ValidationMessage.Should().NotBeNullOrEmpty("validation message must explain the issue");
     }
 
     [Fact]

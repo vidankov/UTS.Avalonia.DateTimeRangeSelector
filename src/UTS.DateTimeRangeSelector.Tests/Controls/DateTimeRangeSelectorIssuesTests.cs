@@ -332,16 +332,17 @@ public class DateTimeRangeSelectorIssuesTests
         // Act 1: make bounds contradictory — From/To get nulled.
         _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
         _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
-        _selector.FromDateTime.Should().BeNull("precondition: values are currently cleared");
+
+        // After the fix, values are preserved, not nulled.
+        _selector.FromDateTime.Should().NotBeNull("values must be preserved even when bounds are contradictory");
+        _selector.ToDateTime.Should().NotBeNull("values must be preserved even when bounds are contradictory");
 
         // Act 2: restore valid bounds.
         _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddHours(5));
 
-        // FAILS: From/To remain null even though bounds are now valid.
-        _selector.FromDateTime.Should().NotBeNull(
-            "once Min <= Max is restored, the control must re-apply defaults or recover a usable " +
-            "range; permanently null From/To after transient contradictory bounds is destructive");
-        _selector.IsValid.Should().BeTrue();
+        // Values should be recovered (clamped if necessary) and valid.
+        _selector.FromDateTime.Should().NotBeNull("once bounds are valid, the previously preserved range must be recoverable");
+        _selector.IsValid.Should().BeTrue("range should be valid after bounds are restored");
     }
 
     [Fact]
@@ -436,29 +437,6 @@ public class DateTimeRangeSelectorIssuesTests
         latestRange!.From!.Value.Kind.Should().Be(DateTimeKind.Utc,
             "RangeChanges observable must always carry UTC From values; " +
             "Unspecified Kind in the snapshot means the coercion contract is broken end-to-end");
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // R26-5 — AreBoundsValid true while IsValid false after contradictory bounds restored
-    // ═══════════════════════════════════════════════════════════════════════
-
-    [Fact]
-    public void R26_5_AfterBoundsRestored_AreBoundsValidTrue_WhileIsValidFalse_AndValidationMessageNonNull()
-    {
-        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
-        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now);
-
-        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
-        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
-
-        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddHours(5));
-
-        _selector.AreBoundsValid.Should().BeTrue(
-            "valid bounds must re-enable the template via AreBoundsValid");
-        _selector.IsValid.Should().BeFalse(
-            "From/To were wiped and not recovered — control must not report valid");
-        _selector.ValidationMessage.Should().NotBeNullOrEmpty(
-            "callers need a validation message when the range is empty but bounds are valid");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -572,5 +550,30 @@ public class DateTimeRangeSelectorIssuesTests
 
         _selector.FromDateTime.Should().NotBe(before,
             "documents asymmetry: public ApplyPreset still mutates range when presets are hidden");
+    }
+
+    [Fact]
+    public void AfterBoundsRestored_WithValidPreservedRange_ShouldBeFullyValid()
+    {
+        // Arrange: set a valid range.
+        _selector.SetCurrentValue(Selector.FromDateTimeProperty, Now.AddHours(-1));
+        _selector.SetCurrentValue(Selector.ToDateTimeProperty, Now);
+
+        // Make bounds contradictory.
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, Now.AddHours(2));
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now);
+
+        // Contradiction: AreBoundsValid = false, IsValid = false
+        _selector.AreBoundsValid.Should().BeFalse();
+        _selector.IsValid.Should().BeFalse();
+
+        // Restore sensible bounds.
+        _selector.SetCurrentValue(Selector.MinDateTimeProperty, null);
+        _selector.SetCurrentValue(Selector.MaxDateTimeProperty, Now.AddHours(5));
+
+        // The range was preserved and now fits the new bounds.
+        _selector.AreBoundsValid.Should().BeTrue("valid bounds must re-enable the template via AreBoundsValid");
+        _selector.IsValid.Should().BeTrue("preserved range must be valid after bounds are restored");
+        _selector.ValidationMessage.Should().BeNull("no error expected when range is valid");
     }
 }

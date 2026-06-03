@@ -9,7 +9,7 @@ namespace UTS.DateTimeRangeSelector.Tests.Controls;
 public class DateTimePickerPanelIssuesTests
 {
     [Fact]
-    public void SetSelectedDate_WhenMinDateAfterMaxDate_ShouldNotProduceDateOutsideBothBounds()
+    public void SetSelectedDate_WhenMinAfterMax_ShouldNotClamp_AndBoundsInvalid()
     {
         var panel = new DateTimePickerPanel
         {
@@ -19,9 +19,10 @@ public class DateTimePickerPanelIssuesTests
 
         panel.SelectedDate = new DateTime(2025, 6, 15);
 
-        panel.SelectedDate.Should().NotBeNull();
-        panel.SelectedDate!.Value.Should().BeOnOrBefore(panel.MaxDateTime!.Value.Date);
-        panel.SelectedDate!.Value.Should().BeOnOrAfter(panel.MinDateTime!.Value.Date);
+        panel.AreBoundsValid.Should().BeFalse("Min > Max must make bounds invalid");
+        panel.SelectedDate.Should().Be(new DateTime(2025, 6, 15), "value must be preserved, not clamped");
+        panel.SelectedDateTime.Should().Be(new DateTime(2025, 6, 15, 0, 0, 0, DateTimeKind.Utc),
+            "SelectedDateTime must also be preserved when bounds are contradictory");
     }
 
     [Fact]
