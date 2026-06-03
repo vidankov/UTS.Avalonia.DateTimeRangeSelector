@@ -613,8 +613,9 @@ public class DateTimeRangeSelector : TemplatedControl
     /// Normalizes <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to UTC,
     /// clamps them to <see cref="MinDateTime"/> / <see cref="MaxDateTime"/>,
     /// and ensures <c>From &lt;= To</c> by adjusting the opposite boundary when the range becomes inverted.
-    /// If <see cref="MinDateTime"/> > <see cref="MaxDateTime"/>, both range values are reset to null
-    /// and the control is disabled until valid bounds are restored.
+    /// If <see cref="MinDateTime"/> > <see cref="MaxDateTime"/>, the values are left untouched,
+    /// <see cref="AreBoundsValid"/> is set to <see langword="false"/>, and the control is disabled
+    /// until valid bounds are restored.
     /// Calls <see cref="UpdateValidation"/> after enforcement.
     /// </summary>
     /// <param name="property">The property that triggered the coercion, used to preserve intent
@@ -632,15 +633,6 @@ public class DateTimeRangeSelector : TemplatedControl
             if (MinDateTime.HasValue && MaxDateTime.HasValue
                 && MinDateTime.Value > MaxDateTime.Value)
             {
-                if (FromDateTime.HasValue)
-                {
-                    SetCurrentValue(FromDateTimeProperty, null);
-                }
-                if (ToDateTime.HasValue)
-                {
-                    SetCurrentValue(ToDateTimeProperty, null);
-                }
-
                 UpdateValidation();
                 return;
             }

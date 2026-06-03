@@ -109,7 +109,7 @@ public class DateTimePickerPanel : TemplatedControl
         {
             // Clamp to allowed date range (date part only)
             DateTime? clampedValue = value;
-            if (clampedValue.HasValue)
+            if (AreBoundsValid && clampedValue.HasValue)
             {
                 var minDate = MinDateTime?.Date;
                 var maxDate = MaxDateTime?.Date;
@@ -347,6 +347,26 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the read-only <see cref="AreBoundsValid"/> property.
+    /// </summary>
+    public static readonly DirectProperty<DateTimePickerPanel, bool> AreBoundsValidProperty =
+        AvaloniaProperty.RegisterDirect<DateTimePickerPanel, bool>(
+            nameof(AreBoundsValid), o => o.AreBoundsValid);
+
+    private bool _areBoundsValid = true;
+
+    /// <summary>
+    /// Gets a value indicating whether the current <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>
+    /// bounds are valid (i.e., Min <= Max or at least one is null).
+    /// When <see langword="false"/>, the panel should disable its interactive elements.
+    /// </summary>
+    public bool AreBoundsValid
+    {
+        get => _areBoundsValid;
+        private set => SetAndRaise(AreBoundsValidProperty, ref _areBoundsValid, value);
+    }
+
+    /// <summary>
     /// Identifies the <see cref="SelectedDateTimeChanged"/> routed event.
     /// </summary>
     public static readonly RoutedEvent<SelectedDateTimeChangedEventArgs> SelectedDateTimeChangedEvent =
@@ -385,6 +405,7 @@ public class DateTimePickerPanel : TemplatedControl
         }
         else if (change.Property == MinDateTimeProperty || change.Property == MaxDateTimeProperty)
         {
+            UpdateBoundsValid();
             CoerceValue(SelectedDateTimeProperty);
         }
     }
@@ -507,12 +528,10 @@ public class DateTimePickerPanel : TemplatedControl
 
     /// <summary>
     /// Coerces a <see cref="DateTime"/> value assigned to <see cref="SelectedDateTime"/>.
-    /// Ensures the value is in UTC via <see cref="DateTimeNormalization.EnsureUtc"/>,
-    /// then clamps it to <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>.
+    /// Ensures the value is in UTC via <see cref="DateTimeNormalization.EnsureUtc"/>.
+    /// If <see cref="AreBoundsValid"/> is <see langword="false"/>, the value is returned unchanged
+    /// (no clamping). Otherwise, it is clamped to <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>.
     /// </summary>
-    /// <param name="sender">The <see cref="DateTimePickerPanel"/> instance.</param>
-    /// <param name="value">The incoming value to coerce, or null.</param>
-    /// <returns>The normalized and clamped UTC DateTime, or null.</returns>
     private static DateTime? CoerceSelectedDateTime(AvaloniaObject sender, DateTime? value)
     {
         if (value is null)
@@ -522,6 +541,12 @@ public class DateTimePickerPanel : TemplatedControl
 
         var dt = DateTimeNormalization.EnsureUtc(value.Value);
         var panel = (DateTimePickerPanel)sender;
+
+        if (!panel.AreBoundsValid)
+        {
+            return dt;
+        }
+
         return DateTimeRangeCoercion.Clamp(dt, panel.MinDateTime, panel.MaxDateTime);
     }
 
@@ -541,6 +566,7 @@ public class DateTimePickerPanel : TemplatedControl
     public DateTimePickerPanel()
     {
         _hour = _minute = _second = _millisecond = 0;
+        UpdateBoundsValid();
     }
 
     /// <summary>
@@ -556,4 +582,11 @@ public class DateTimePickerPanel : TemplatedControl
 
         SyncComponentsFromSelectedDateTime();
     }
+
+    /// <summary>
+    /// Recalculates <see cref="AreBoundsValid"/> based on the current
+    /// <see cref="MinDateTime"/> and <see cref="MaxDateTime"/> values.
+    /// </summary>
+    private void UpdateBoundsValid() =>
+        AreBoundsValid = !(MinDateTime.HasValue && MaxDateTime.HasValue && MinDateTime.Value > MaxDateTime.Value);
 }

@@ -42,7 +42,8 @@
 		<Setter Property="Template">
 			<ControlTemplate>
 
-				<StackPanel Orientation="Horizontal">
+				<StackPanel Orientation="Horizontal"
+							IsEnabled="{Binding AreBoundsValid, RelativeSource={RelativeSource TemplatedParent}}">
 
 					<!-- Date selection -->
 					<controls:ConstrainedCalendarDatePicker x:Name="PART_Calendar"
