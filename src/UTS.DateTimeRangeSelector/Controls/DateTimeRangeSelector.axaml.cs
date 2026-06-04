@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
@@ -8,6 +9,7 @@ using System.Reactive.Subjects;
 using System.Windows.Input;
 using UTS.DateTimeRangeSelector.Core;
 using UTS.DateTimeRangeSelector.Events;
+using UTS.DateTimeRangeSelector.Exceptions;
 
 namespace UTS.DateTimeRangeSelector.Controls;
 
@@ -19,8 +21,11 @@ namespace UTS.DateTimeRangeSelector.Controls;
 [TemplatePart("PART_ToPanel", typeof(DateTimePickerPanel))]
 public class DateTimeRangeSelector : TemplatedControl
 {
-    private readonly BehaviorSubject<DateTimeRange> _rangeSubject;
-    private readonly BehaviorSubject<ValidationResult> _validationSubject;
+    private readonly ReplaySubject<DateTimeRange> _rangeSubject;
+    private readonly ReplaySubject<ValidationResult> _validationSubject;
+
+    private DateTimePickerPanel? _fromPanel;
+    private DateTimePickerPanel? _toPanel;
 
     /// <summary>
     /// Defines the <see cref="FromDateTime"/> property.
@@ -28,7 +33,8 @@ public class DateTimeRangeSelector : TemplatedControl
     public static readonly StyledProperty<DateTime?> FromDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
             nameof(FromDateTime),
-            defaultBindingMode: BindingMode.TwoWay);
+            defaultBindingMode: BindingMode.TwoWay,
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the start of the date/time range (UTC).
@@ -45,7 +51,8 @@ public class DateTimeRangeSelector : TemplatedControl
     public static readonly StyledProperty<DateTime?> ToDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
             nameof(ToDateTime),
-            defaultBindingMode: BindingMode.TwoWay);
+            defaultBindingMode: BindingMode.TwoWay,
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the end of the date/time range (UTC).
@@ -57,15 +64,52 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
+    /// Defines the <see cref="FromLabel"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> FromLabelProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(FromLabel),
+            defaultValue: "From:");
+
+    /// <summary>
+    /// Gets or sets the label text for the From date-time panel.
+    /// The default is "From:".
+    /// </summary>
+    public string FromLabel
+    {
+        get => GetValue(FromLabelProperty);
+        set => SetValue(FromLabelProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="ToLabel"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> ToLabelProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(ToLabel),
+            defaultValue: "To:");
+
+    /// <summary>
+    /// Gets or sets the label text for the To date-time panel.
+    /// The default is "To:".
+    /// </summary>
+    public string ToLabel
+    {
+        get => GetValue(ToLabelProperty);
+        set => SetValue(ToLabelProperty, value);
+    }
+
+    /// <summary>
     /// Defines the <see cref="MinDateTime"/> property.
     /// </summary>
     public static readonly StyledProperty<DateTime?> MinDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
-            nameof(MinDateTime));
+            nameof(MinDateTime),
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the minimum allowed date and time for the range.
-    /// Null means no lower limit.
+    /// The value is coerced to UTC. Null means no lower limit.
     /// </summary>
     public DateTime? MinDateTime
     {
@@ -78,11 +122,12 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     public static readonly StyledProperty<DateTime?> MaxDateTimeProperty =
         AvaloniaProperty.Register<DateTimeRangeSelector, DateTime?>(
-            nameof(MaxDateTime));
+            nameof(MaxDateTime),
+            coerce: CoerceDateTimeToUtc);
 
     /// <summary>
     /// Gets or sets the maximum allowed date and time for the range.
-    /// Null means no upper limit.
+    /// The value is coerced to UTC. Null means no upper limit.
     /// </summary>
     public DateTime? MaxDateTime
     {
@@ -133,6 +178,25 @@ public class DateTimeRangeSelector : TemplatedControl
             defaultValue: true);
 
     /// <summary>
+    /// Determines whether a preset or reset operation is allowed to silently truncate
+    /// the requested duration when it does not fit within <see cref="MinDateTime"/>..<see cref="MaxDateTime"/>.
+    /// If <see langword="false"/> (default), an <see cref="PresetOutOfBoundsException"/> is thrown
+    /// and the current range remains unchanged.
+    /// If <see langword="true"/>, the range is clamped to the available bounds
+    /// (behaviour identical to earlier versions).
+    /// </summary>
+    public static readonly StyledProperty<bool> AllowPresetTruncationProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, bool>(
+            nameof(AllowPresetTruncation),
+            defaultValue: false);
+
+    public bool AllowPresetTruncation
+    {
+        get => GetValue(AllowPresetTruncationProperty);
+        set => SetValue(AllowPresetTruncationProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets whether the preset buttons panel is visible.
     /// </summary>
     public bool ShowPresets
@@ -159,6 +223,97 @@ public class DateTimeRangeSelector : TemplatedControl
     {
         get => GetValue(DateTimeFormatProperty);
         set => SetValue(DateTimeFormatProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="TimeProvider"/> property.
+    /// </summary>
+    public static readonly StyledProperty<TimeProvider?> TimeProviderProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, TimeProvider?>(
+            nameof(TimeProvider),
+            defaultValue: TimeProvider.System);
+
+    /// <summary>
+    /// Gets or sets the <see cref="System.TimeProvider"/> used to obtain the current UTC time
+    /// when applying presets or initializing the default range.
+    /// The default is <see cref="System.TimeProvider.System"/>.
+    /// </summary>
+    public TimeProvider? TimeProvider
+    {
+        get => GetValue(TimeProviderProperty);
+        set => SetValue(TimeProviderProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="HourSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> HourSuffixProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(HourSuffix),
+            defaultValue: "ч.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the hours control.
+    /// The default is "ч.".
+    /// </summary>
+    public string HourSuffix
+    {
+        get => GetValue(HourSuffixProperty);
+        set => SetValue(HourSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MinuteSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> MinuteSuffixProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(MinuteSuffix),
+            defaultValue: "мин.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the minutes control.
+    /// The default is "мин.".
+    /// </summary>
+    public string MinuteSuffix
+    {
+        get => GetValue(MinuteSuffixProperty);
+        set => SetValue(MinuteSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="SecondSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> SecondSuffixProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(SecondSuffix),
+            defaultValue: "сек.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the seconds control.
+    /// The default is "сек.".
+    /// </summary>
+    public string SecondSuffix
+    {
+        get => GetValue(SecondSuffixProperty);
+        set => SetValue(SecondSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MillisecondSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> MillisecondSuffixProperty =
+        AvaloniaProperty.Register<DateTimeRangeSelector, string>(
+            nameof(MillisecondSuffix),
+            defaultValue: "мс.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the milliseconds control.
+    /// The default is "мс.".
+    /// </summary>
+    public string MillisecondSuffix
+    {
+        get => GetValue(MillisecondSuffixProperty);
+        set => SetValue(MillisecondSuffixProperty, value);
     }
 
     /// <summary>
@@ -244,15 +399,6 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
-    /// Gets or sets the <see cref="System.TimeProvider"/> used to obtain the current UTC time
-    /// when applying presets or initializing the default range.
-    /// </summary>
-    /// <remarks>
-    /// Must be set before the control is fully loaded to take effect during initialization.
-    /// </remarks>
-    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
-
-    /// <summary>
     /// Defines the <see cref="ApplyPresetCommand"/> property.
     /// </summary>
     public static readonly DirectProperty<DateTimeRangeSelector, ICommand> ApplyPresetCommandProperty =
@@ -264,7 +410,9 @@ public class DateTimeRangeSelector : TemplatedControl
 
     /// <summary>
     /// Gets an observable sequence of <see cref="DateTimeRange"/> values representing
-    /// the current range. The observable is hot and replays the latest value to new subscribers.
+    /// the current range. The observable is hot and replays the latest value to new subscribers
+    /// once the control has initialized (after <see cref="OnApplyTemplate"/> applies defaults).
+    /// Subscribers attached before template application receive the first value when initialization completes.
     /// Changes are distinct (no consecutive duplicates).
     /// </summary>
     public IObservable<DateTimeRange> RangeChanges =>
@@ -272,7 +420,9 @@ public class DateTimeRangeSelector : TemplatedControl
 
     /// <summary>
     /// Gets an observable sequence of <see cref="ValidationResult"/> values representing
-    /// the current validation state. The observable is hot and replays the latest value.
+    /// the current validation state. The observable is hot and replays the latest value
+    /// once the control has initialized (after <see cref="OnApplyTemplate"/> applies defaults).
+    /// Subscribers attached before template application receive the first value when initialization completes.
     /// Changes are distinct (no consecutive duplicates).
     /// </summary>
     public IObservable<ValidationResult> ValidationChanges =>
@@ -283,28 +433,10 @@ public class DateTimeRangeSelector : TemplatedControl
     /// </summary>
     public DateTimeRangeSelector()
     {
-        _applyPresetCommand = new PresetCommand(
-            execute: duration =>
-            {
-                ApplyRangeChange(
-                    action: () =>
-                    {
-                        var (start, end) = CalculateRangeFromAnchor(duration);
-                        SetCurrentValue(FromDateTimeProperty, start);
-                        SetCurrentValue(ToDateTimeProperty, end);
-                        Coerce(FromDateTimeProperty);
-                    },
-                    oldFrom: FromDateTime,
-                    oldTo: ToDateTime,
-                    oldIsValid: IsValid,
-                    oldValidationMessage: ValidationMessage
-                );
-            },
-            canExecute: () => ShowPresets
-        );
+        _applyPresetCommand = new PresetCommand(ApplyPreset, canExecute: () => ShowPresets);
 
-        _rangeSubject = new(new(FromDateTime, ToDateTime));
-        _validationSubject = new(new(IsValid, ValidationMessage));
+        _rangeSubject = new ReplaySubject<DateTimeRange>(1);
+        _validationSubject = new ReplaySubject<ValidationResult>(1);
     }
 
     /// <summary>
@@ -331,54 +463,22 @@ public class DateTimeRangeSelector : TemplatedControl
     }
 
     /// <summary>
-    /// Applies a preset duration to the range, using the same logic as the preset command.
-    /// The range end is <see cref="MaxDateTime"/> if set, otherwise the current UTC time.
-    /// The range start is end - <paramref name="duration"/>, clamped to <see cref="MinDateTime"/>.
+    /// Applies a preset duration to the range.
+    /// See <see cref="ApplyPresetCore"/> for details on truncation behaviour and exceptions.
     /// </summary>
     /// <param name="duration">A positive <see cref="TimeSpan"/> representing the desired range length.</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="duration"/> is zero or negative.</exception>
-    public void ApplyPreset(TimeSpan duration)
-    {
-        if (duration <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(duration), "Duration must be positive.");
-        }
-
-        ApplyRangeChange(
-            action: () =>
-            {
-                var (start, end) = CalculateRangeFromAnchor(duration);
-                SetCurrentValue(FromDateTimeProperty, start);
-                SetCurrentValue(ToDateTimeProperty, end);
-                Coerce(FromDateTimeProperty);
-            },
-            oldFrom: FromDateTime,
-            oldTo: ToDateTime,
-            oldIsValid: IsValid,
-            oldValidationMessage: ValidationMessage
-        );
-    }
+    /// <exception cref="PresetOutOfBoundsException">Thrown when the requested duration cannot be satisfied
+    /// and <see cref="AllowPresetTruncation"/> is <see langword="false"/>.</exception>
+    public void ApplyPreset(TimeSpan duration) => ApplyPresetCore(duration, isExplicitPreset: true);
 
     /// <summary>
-    /// Resets <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to their default values,
-    /// as if the control was just initialized. <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>
-    /// are left unchanged.
+    /// Resets <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to the default 1‑hour window.
+    /// See <see cref="ApplyPresetCore"/> for details on truncation behaviour and exceptions.
     /// </summary>
-    public void ResetToDefaults()
-    {
-        ApplyRangeChange(
-            action: () =>
-            {
-                ClearValue(FromDateTimeProperty);
-                ClearValue(ToDateTimeProperty);
-                ApplyDefaultRange();
-            },
-            oldFrom: FromDateTime,
-            oldTo: ToDateTime,
-            oldIsValid: IsValid,
-            oldValidationMessage: ValidationMessage
-        );
-    }
+    /// <exception cref="PresetOutOfBoundsException">Thrown when the default 1‑hour window cannot be satisfied
+    /// and <see cref="AllowPresetTruncation"/> is <see langword="false"/>.</exception>
+    public void ResetToDefaults() => ApplyPresetCore(TimeSpan.FromHours(1), isExplicitPreset: false);
 
     /// <summary>
     /// Executes <paramref name="action"/> atomically, suppressing recursive event generation.
@@ -430,23 +530,25 @@ public class DateTimeRangeSelector : TemplatedControl
     /// If <see cref="MaxDateTime"/> is set, it is the anchor;
     /// otherwise, the current UTC time from <see cref="TimeProvider"/>.
     /// </summary>
-    private DateTime GetAnchor() => MaxDateTime ?? TimeProvider.GetUtcNow().UtcDateTime;
+    private DateTime GetAnchor() => MaxDateTime ?? (TimeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
 
     /// <summary>
-    /// Calculates a time range of the given <paramref name="duration"/> ending at the anchor.
-    /// The start is clamped to <see cref="MinDateTime"/> if a lower bound exists.
+    /// Calculates a time range of the given <paramref name="duration"/> relative to the anchor
+    /// (<see cref="MaxDateTime"/> if set, otherwise the current UTC time).
+    /// If <see cref="MinDateTime"/> is later than the anchor, the range is shifted forward
+    /// so that it starts at <see cref="MinDateTime"/> and ends at Min + duration.
+    /// The returned values are not yet clamped to <see cref="MaxDateTime"/> — 
+    /// that is handled later by <see cref="Coerce"/>.
     /// </summary>
-    /// <param name="duration">The length of the range (positive).</param>
-    /// <returns>A tuple containing the calculated (start, end) values in UTC.</returns>
-    private (DateTime start, DateTime end) CalculateRangeFromAnchor(TimeSpan duration)
+    /// <returns>A tuple containing (start, end) in UTC.</returns>
+    private (DateTime Start, DateTime End) CalculatePresetRange(TimeSpan duration)
     {
-        var end = GetAnchor();
-        var start = end - duration;
-        if (MinDateTime.HasValue && start < MinDateTime.Value)
+        var anchor = GetAnchor(); // MaxDateTime ?? UtcNow
+        if (MinDateTime.HasValue && MinDateTime.Value > anchor)
         {
-            start = MinDateTime.Value;
+            return (MinDateTime.Value, MinDateTime.Value + duration);
         }
-        return (start, end);
+        return (anchor - duration, anchor);
     }
 
     /// <summary>
@@ -511,8 +613,9 @@ public class DateTimeRangeSelector : TemplatedControl
     /// Normalizes <see cref="FromDateTime"/> and <see cref="ToDateTime"/> to UTC,
     /// clamps them to <see cref="MinDateTime"/> / <see cref="MaxDateTime"/>,
     /// and ensures <c>From &lt;= To</c> by adjusting the opposite boundary when the range becomes inverted.
-    /// If <see cref="MinDateTime"/> > <see cref="MaxDateTime"/>, both range values are reset to null
-    /// and the control is disabled until valid bounds are restored.
+    /// If <see cref="MinDateTime"/> > <see cref="MaxDateTime"/>, the values are left untouched,
+    /// <see cref="AreBoundsValid"/> is set to <see langword="false"/>, and the control is disabled
+    /// until valid bounds are restored.
     /// Calls <see cref="UpdateValidation"/> after enforcement.
     /// </summary>
     /// <param name="property">The property that triggered the coercion, used to preserve intent
@@ -527,61 +630,25 @@ public class DateTimeRangeSelector : TemplatedControl
         _isCoercing = true;
         try
         {
-            // 1. Если границы противоречивы – сбрасываем значения и прекращаем обработку.
             if (MinDateTime.HasValue && MaxDateTime.HasValue
                 && MinDateTime.Value > MaxDateTime.Value)
             {
-                if (FromDateTime.HasValue)
-                {
-                    SetCurrentValue(FromDateTimeProperty, null);
-                }
-                if (ToDateTime.HasValue)
-                {
-                    SetCurrentValue(ToDateTimeProperty, null);
-                }
-
                 UpdateValidation();
                 return;
             }
 
-            // 2. Нормализуем и клампим From/To к границам Min/Max
-            DateTime? from = ClampToBounds(FromDateTime);
-            DateTime? to = ClampToBounds(ToDateTime);
+            DateTime? originalFrom = FromDateTime;
+            DateTime? originalTo = ToDateTime;
 
-            if (from != FromDateTime)
+            var range = ComputeCoercedRange(originalFrom, originalTo, property);
+
+            if (range.From != originalFrom)
             {
-                SetCurrentValue(FromDateTimeProperty, from);
+                SetCurrentValue(FromDateTimeProperty, range.From);
             }
-            if (to != ToDateTime)
+            if (range.To != originalTo)
             {
-                SetCurrentValue(ToDateTimeProperty, to);
-            }
-
-            // 3. Если после клампинга From > To – восстанавливаем порядок,
-            //    сохраняя намерение того свойства, которое изменилось.
-            if (from.HasValue && to.HasValue && from.Value > to.Value)
-            {
-
-                if (property == FromDateTimeProperty)
-                {
-                    SetCurrentValue(ToDateTimeProperty, from.Value);
-                }
-                else if (property == ToDateTimeProperty)
-                {
-                    SetCurrentValue(FromDateTimeProperty, to.Value);
-                }
-                else if (property == MinDateTimeProperty)
-                {
-                    SetCurrentValue(ToDateTimeProperty, from.Value);   // Min сдвинулся вправо → To подтягиваем
-                }
-                else if (property == MaxDateTimeProperty)
-                {
-                    SetCurrentValue(FromDateTimeProperty, to.Value);   // Max сдвинулся влево → From подтягиваем
-                }
-                else
-                {
-                    SetCurrentValue(ToDateTimeProperty, from.Value);   // fallback
-                }
+                SetCurrentValue(ToDateTimeProperty, range.To);
             }
 
             UpdateValidation();
@@ -590,6 +657,48 @@ public class DateTimeRangeSelector : TemplatedControl
         {
             _isCoercing = false;
         }
+    }
+
+    /// <summary>
+    /// Pure computation of the final From/To values after normalisation, clamping,
+    /// and order enforcement. Assumes that the bounds are valid
+    /// (<see cref="MinDateTime"/> &lt;= <see cref="MaxDateTime"/>).
+    /// Callers must check for contradictory bounds before invoking this method.
+    /// </summary>
+    /// <returns>A non-null <see cref="DateTimeRange"/> with both ends set.</returns>
+    private DateTimeRange ComputeCoercedRange(
+        DateTime? rawFrom,
+        DateTime? rawTo,
+        AvaloniaProperty leader)
+    {
+        DateTime? from = ClampToBounds(rawFrom);
+        DateTime? to = ClampToBounds(rawTo);
+
+        if (from.HasValue && to.HasValue && from.Value > to.Value)
+        {
+            if (leader == FromDateTimeProperty)
+            {
+                to = from;
+            }
+            else if (leader == ToDateTimeProperty)
+            {
+                from = to;
+            }
+            else if (leader == MinDateTimeProperty)
+            {
+                to = from;
+            }
+            else if (leader == MaxDateTimeProperty)
+            {
+                from = to;
+            }
+            else
+            {
+                to = from;
+            }
+        }
+
+        return new DateTimeRange(from, to);
     }
 
     private DateTime? ClampToBounds(DateTime? value)
@@ -649,11 +758,27 @@ public class DateTimeRangeSelector : TemplatedControl
     {
         base.OnApplyTemplate(e);
 
+        _fromPanel = e.NameScope.Find<DateTimePickerPanel>("PART_FromPanel");
+        _toPanel = e.NameScope.Find<DateTimePickerPanel>("PART_ToPanel");
+
         if (!_defaultsApplied)
         {
             ApplyDefaultRange();
             _defaultsApplied = true;
         }
+
+        UpdateValidation();
+        PublishObservableState();
+    }
+
+    /// <summary>
+    /// Publishes the current range and validation snapshots to replay subjects.
+    /// Does not raise <see cref="RangeChanged"/> or <see cref="ValidationChanged"/> routed events.
+    /// </summary>
+    private void PublishObservableState()
+    {
+        _rangeSubject.OnNext(new DateTimeRange(FromDateTime, ToDateTime));
+        _validationSubject.OnNext(new ValidationResult(IsValid, ValidationMessage));
     }
 
     /// <summary>
@@ -680,7 +805,7 @@ public class DateTimeRangeSelector : TemplatedControl
 
             if (!FromDateTime.HasValue && !ToDateTime.HasValue)
             {
-                var (start, end) = CalculateRangeFromAnchor(defaultDuration);
+                var (start, end) = CalculatePresetRange(defaultDuration);
                 SetCurrentValue(FromDateTimeProperty, start);
                 SetCurrentValue(ToDateTimeProperty, end);
             }
@@ -714,6 +839,79 @@ public class DateTimeRangeSelector : TemplatedControl
         oldIsValid: IsValid,
         oldValidationMessage: ValidationMessage
     );
+
+    /// <summary>
+    /// Core logic for applying a preset duration or resetting to defaults.
+    /// If <see cref="AllowPresetTruncation"/> is <see langword="false"/> (default),
+    /// throws <see cref="PresetOutOfBoundsException"/> when the requested duration
+    /// cannot be fully satisfied within the current <see cref="MinDateTime"/>..<see cref="MaxDateTime"/> bounds.
+    /// In truncation mode (<see cref="AllowPresetTruncation"/> = <see langword="true"/>)
+    /// the range is silently clamped to the available space.
+    /// </summary>
+    /// <param name="duration">A positive <see cref="TimeSpan"/> requested for the range.</param>
+    /// <param name="isExplicitPreset">
+    /// <see langword="true"/> when called from <see cref="ApplyPreset"/>,
+    /// <see langword="false"/> from <see cref="ResetToDefaults"/>.
+    /// Currently unused; reserved for future differentiation of behaviour.
+    /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="duration"/> is zero or negative.
+    /// </exception>
+    /// <exception cref="PresetOutOfBoundsException">
+    /// Thrown when the requested duration cannot be satisfied and <see cref="AllowPresetTruncation"/> is <see langword="false"/>.
+    /// </exception>
+    private void ApplyPresetCore(TimeSpan duration, bool isExplicitPreset)
+    {
+        if (duration <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(duration), "Duration must be positive.");
+        }
+
+        // Contradictory bounds → range is impossible.
+        if (MinDateTime.HasValue && MaxDateTime.HasValue && MinDateTime.Value > MaxDateTime.Value)
+        {
+            if (!AllowPresetTruncation)
+            {
+                throw new PresetOutOfBoundsException(duration, resultingDuration: null, MinDateTime, MaxDateTime);
+            }
+            // Soft mode: leave current range unchanged.
+            return;
+        }
+
+        var (rawStart, rawEnd) = CalculatePresetRange(duration);
+        DateTimeRange finalRange = ComputeCoercedRange(rawStart, rawEnd, FromDateTimeProperty);
+
+        // Determine whether the requested duration was fully preserved.
+        bool durationPreserved = duration == finalRange.Duration;
+
+        if (!AllowPresetTruncation && !durationPreserved)
+        {
+            throw new PresetOutOfBoundsException(duration, finalRange.Duration, MinDateTime, MaxDateTime);
+        }
+
+        // Apply the computed (possibly truncated) range.
+        ApplyRangeChange(
+            action: () =>
+            {
+                SetCurrentValue(FromDateTimeProperty, finalRange.From);
+                SetCurrentValue(ToDateTimeProperty, finalRange.To);
+                Coerce(FromDateTimeProperty);
+            },
+            oldFrom: FromDateTime,
+            oldTo: ToDateTime,
+            oldIsValid: IsValid,
+            oldValidationMessage: ValidationMessage
+        );
+    }
+
+    private static DateTime? CoerceDateTimeToUtc(AvaloniaObject sender, DateTime? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+        return DateTimeNormalization.EnsureUtc(value.Value);
+    }
 }
 
 /// <summary>
@@ -732,7 +930,8 @@ internal class PresetCommand : ICommand
 
     public event EventHandler? CanExecuteChanged;
 
-    public bool CanExecute(object? parameter) => _canExecute() && parameter is TimeSpan;
+    public bool CanExecute(object? parameter) =>
+        _canExecute() && parameter is TimeSpan ts && ts > TimeSpan.Zero;
 
     public void Execute(object? parameter)
     {

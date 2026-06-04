@@ -109,7 +109,7 @@ public class DateTimePickerPanel : TemplatedControl
         {
             // Clamp to allowed date range (date part only)
             DateTime? clampedValue = value;
-            if (clampedValue.HasValue)
+            if (AreBoundsValid && clampedValue.HasValue)
             {
                 var minDate = MinDateTime?.Date;
                 var maxDate = MaxDateTime?.Date;
@@ -157,18 +157,21 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _hour;
-    /// <summary>Gets or sets the hours component (0-23).</summary>
+    /// <summary>
+    /// Gets or sets the hours component. Values outside 0..23 are clamped to that range.
+    /// </summary>
     public int Hour
     {
         get => _hour;
         set
         {
+            value = Math.Clamp(value, 0, 23);
             if (value == _hour)
             {
                 return;
             }
             SetAndRaise(HourProperty, ref _hour, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -186,18 +189,21 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _minute;
-    /// <summary>Gets or sets the minutes component (0-59).</summary>
+    /// <summary>
+    /// Gets or sets the minutes component. Values outside 0..59 are clamped to that range.
+    /// </summary>
     public int Minute
     {
         get => _minute;
         set
         {
+            value = Math.Clamp(value, 0, 59);
             if (value == _minute)
             {
                 return;
             }
             SetAndRaise(MinuteProperty, ref _minute, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -215,18 +221,21 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _second;
-    /// <summary>Gets or sets the seconds component (0-59).</summary>
+    /// <summary>
+    /// Gets or sets the seconds component. Values outside 0..59 are clamped to that range.
+    /// </summary>
     public int Second
     {
         get => _second;
         set
         {
+            value = Math.Clamp(value, 0, 59);
             if (value == _second)
             {
                 return;
             }
             SetAndRaise(SecondProperty, ref _second, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
@@ -244,22 +253,117 @@ public class DateTimePickerPanel : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     private int _millisecond;
-    /// <summary>Gets or sets the milliseconds component (0-999).</summary>
+    /// <summary>
+    /// Gets or sets the milliseconds component. Values outside 0..999 are clamped to that range.
+    /// </summary>
     public int Millisecond
     {
         get => _millisecond;
         set
         {
+            value = Math.Clamp(value, 0, 999);
             if (value == _millisecond)
             {
                 return;
             }
             SetAndRaise(MillisecondProperty, ref _millisecond, value);
-            if (!_updatingComponents)
+            if (!_updatingComponents && SelectedDate.HasValue)
             {
                 UpdateSelectedDateTime();
             }
         }
+    }
+
+    /// <summary>
+    /// Defines the <see cref="HourSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> HourSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(HourSuffix),
+            defaultValue: "ч.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the hours control.
+    /// The default is "ч.".
+    /// </summary>
+    public string HourSuffix
+    {
+        get => GetValue(HourSuffixProperty);
+        set => SetValue(HourSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MinuteSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> MinuteSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(MinuteSuffix),
+            defaultValue: "мин.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the minutes control.
+    /// The default is "мин.".
+    /// </summary>
+    public string MinuteSuffix
+    {
+        get => GetValue(MinuteSuffixProperty);
+        set => SetValue(MinuteSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="SecondSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> SecondSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(SecondSuffix),
+            defaultValue: "сек.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the seconds control.
+    /// The default is "сек.".
+    /// </summary>
+    public string SecondSuffix
+    {
+        get => GetValue(SecondSuffixProperty);
+        set => SetValue(SecondSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="MillisecondSuffix"/> property.
+    /// </summary>
+    public static readonly StyledProperty<string> MillisecondSuffixProperty =
+        AvaloniaProperty.Register<DateTimePickerPanel, string>(
+            nameof(MillisecondSuffix),
+            defaultValue: "мс.");
+
+    /// <summary>
+    /// Gets or sets the suffix displayed after the milliseconds control.
+    /// The default is "мс.".
+    /// </summary>
+    public string MillisecondSuffix
+    {
+        get => GetValue(MillisecondSuffixProperty);
+        set => SetValue(MillisecondSuffixProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the read-only <see cref="AreBoundsValid"/> property.
+    /// </summary>
+    public static readonly DirectProperty<DateTimePickerPanel, bool> AreBoundsValidProperty =
+        AvaloniaProperty.RegisterDirect<DateTimePickerPanel, bool>(
+            nameof(AreBoundsValid), o => o.AreBoundsValid);
+
+    private bool _areBoundsValid = true;
+
+    /// <summary>
+    /// Gets a value indicating whether the current <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>
+    /// bounds are valid (i.e., Min <= Max or at least one is null).
+    /// When <see langword="false"/>, the panel should disable its interactive elements.
+    /// </summary>
+    public bool AreBoundsValid
+    {
+        get => _areBoundsValid;
+        private set => SetAndRaise(AreBoundsValidProperty, ref _areBoundsValid, value);
     }
 
     /// <summary>
@@ -301,14 +405,15 @@ public class DateTimePickerPanel : TemplatedControl
         }
         else if (change.Property == MinDateTimeProperty || change.Property == MaxDateTimeProperty)
         {
+            UpdateBoundsValid();
             CoerceValue(SelectedDateTimeProperty);
         }
     }
 
     /// <summary>
-    /// Synchronizes the individual time components and the date picker with the new value of 
-    /// <see cref="SelectedDateTime"/>. If the value has changed, raises the 
-    /// <see cref="SelectedDateTimeChanged"/> routed event.
+    /// Called whenever <see cref="SelectedDateTime"/> changes.
+    /// Updates the time/date components under the <see cref="_updatingComponents"/> guard
+    /// and raises the <see cref="SelectedDateTimeChanged"/> routed event.
     /// </summary>
     /// <param name="oldValue">The previous <see cref="SelectedDateTime"/> value, or null if no value was previously set.</param>
     /// <param name="newValue">The new <see cref="SelectedDateTime"/> value, or null if the value was cleared.</param>
@@ -322,25 +427,7 @@ public class DateTimePickerPanel : TemplatedControl
         _updatingComponents = true;
         try
         {
-            if (newValue.HasValue)
-            {
-                var dt = newValue.Value;
-                Hour = dt.Hour;
-                Minute = dt.Minute;
-                Second = dt.Second;
-                Millisecond = dt.Millisecond;
-                SelectedDate = dt.Date;
-            }
-            else
-            {
-                Hour = 0;
-                Minute = 0;
-                Second = 0;
-                Millisecond = 0;
-                SelectedDate = null;
-            }
-
-            _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+            ApplyComponentsFromDateTime(SelectedDateTime);
         }
         finally
         {
@@ -364,7 +451,7 @@ public class DateTimePickerPanel : TemplatedControl
     /// </summary>
     private void UpdateSelectedDateTime()
     {
-        if (!SelectedDate.HasValue || _syncingComponents)
+        if (_syncingComponents)
         {
             return;
         }
@@ -385,11 +472,9 @@ public class DateTimePickerPanel : TemplatedControl
     }
 
     /// <summary>
-    /// Forces synchronization of the individual time components (<see cref="Hour"/>, <see cref="Minute"/>,
-    /// <see cref="Second"/>, <see cref="Millisecond"/>) and <see cref="SelectedDate"/> with the current
-    /// value of <see cref="SelectedDateTime"/>. This is necessary because after coercion, 
-    /// <see cref="SelectedDateTime"/> may remain unchanged while the components still hold the
-    /// invalid input values. Calling this method immediately corrects the visual representation.
+    /// Forces the individual time/date components and the calendar to reflect the
+    /// current value of <see cref="SelectedDateTime"/>.
+    /// Protected against reentrant calls via <see cref="_syncingComponents"/>.
     /// </summary>
     private void SyncComponentsFromSelectedDateTime()
     {
@@ -401,24 +486,7 @@ public class DateTimePickerPanel : TemplatedControl
         _syncingComponents = true;
         try
         {
-            var dt = SelectedDateTime;
-            if (dt.HasValue)
-            {
-                Hour = dt.Value.Hour;
-                Minute = dt.Value.Minute;
-                Second = dt.Value.Second;
-                Millisecond = dt.Value.Millisecond;
-                SelectedDate = dt.Value.Date;
-            }
-            else
-            {
-                Hour = 0;
-                Minute = 0;
-                Second = 0;
-                Millisecond = 0;
-                SelectedDate = null;
-            }
-            _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+            ApplyComponentsFromDateTime(SelectedDateTime);
         }
         finally
         {
@@ -426,15 +494,44 @@ public class DateTimePickerPanel : TemplatedControl
         }
     }
 
+    /// <summary>
+    /// Writes the date and time components from the given <paramref name="dateTime"/>
+    /// to <see cref="Hour"/>, <see cref="Minute"/>, <see cref="Second"/>,
+    /// <see cref="Millisecond"/>, <see cref="SelectedDate"/> and synchronises
+    /// <see cref="ConstrainedCalendarDatePicker.SelectedDate"/> on the internal calendar.
+    /// This method does NOT prevent reentrancy — callers must set the appropriate
+    /// suppression flags (<see cref="_updatingComponents"/> or <see cref="_syncingComponents"/>).
+    /// </summary>
+    /// <param name="dateTime">The value to apply, or null to clear all components.</param>
+    private void ApplyComponentsFromDateTime(DateTime? dateTime)
+    {
+        if (dateTime.HasValue)
+        {
+            var dt = dateTime.Value;
+            Hour = dt.Hour;
+            Minute = dt.Minute;
+            Second = dt.Second;
+            Millisecond = dt.Millisecond;
+            SelectedDate = dt.Date;
+        }
+        else
+        {
+            Hour = 0;
+            Minute = 0;
+            Second = 0;
+            Millisecond = 0;
+            SelectedDate = null;
+        }
+
+        _calendar?.SetCurrentValue(CalendarDatePicker.SelectedDateProperty, SelectedDate);
+    }
 
     /// <summary>
     /// Coerces a <see cref="DateTime"/> value assigned to <see cref="SelectedDateTime"/>.
-    /// Ensures the value is in UTC via <see cref="DateTimeNormalization.EnsureUtc"/>,
-    /// then clamps it to <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>.
+    /// Ensures the value is in UTC via <see cref="DateTimeNormalization.EnsureUtc"/>.
+    /// If <see cref="AreBoundsValid"/> is <see langword="false"/>, the value is returned unchanged
+    /// (no clamping). Otherwise, it is clamped to <see cref="MinDateTime"/> and <see cref="MaxDateTime"/>.
     /// </summary>
-    /// <param name="sender">The <see cref="DateTimePickerPanel"/> instance.</param>
-    /// <param name="value">The incoming value to coerce, or null.</param>
-    /// <returns>The normalized and clamped UTC DateTime, or null.</returns>
     private static DateTime? CoerceSelectedDateTime(AvaloniaObject sender, DateTime? value)
     {
         if (value is null)
@@ -444,6 +541,12 @@ public class DateTimePickerPanel : TemplatedControl
 
         var dt = DateTimeNormalization.EnsureUtc(value.Value);
         var panel = (DateTimePickerPanel)sender;
+
+        if (!panel.AreBoundsValid)
+        {
+            return dt;
+        }
+
         return DateTimeRangeCoercion.Clamp(dt, panel.MinDateTime, panel.MaxDateTime);
     }
 
@@ -463,13 +566,13 @@ public class DateTimePickerPanel : TemplatedControl
     public DateTimePickerPanel()
     {
         _hour = _minute = _second = _millisecond = 0;
+        UpdateBoundsValid();
     }
 
     /// <summary>
-    /// Called when the control template is applied. Forces synchronization of the
-    /// individual time/date components with the current value of <see cref="SelectedDateTime"/>.
-    /// If a value was set before the template was loaded, raises the 
-    /// <see cref="SelectedDateTimeChanged"/> event with a null old value.
+    /// Called when the control template is applied. Synchronizes the individual
+    /// time/date components (<see cref="SelectedDate"/>, <see cref="Hour"/>, etc.)
+    /// and the internal calendar with the current value of <see cref="SelectedDateTime"/>.
     /// </summary>
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -477,9 +580,13 @@ public class DateTimePickerPanel : TemplatedControl
 
         _calendar = e.NameScope.Find<ConstrainedCalendarDatePicker>("PART_Calendar");
 
-        if (SelectedDateTime.HasValue)
-        {
-            OnSelectedDateTimeChanged(null, SelectedDateTime.Value);
-        }
+        SyncComponentsFromSelectedDateTime();
     }
+
+    /// <summary>
+    /// Recalculates <see cref="AreBoundsValid"/> based on the current
+    /// <see cref="MinDateTime"/> and <see cref="MaxDateTime"/> values.
+    /// </summary>
+    private void UpdateBoundsValid() =>
+        AreBoundsValid = !(MinDateTime.HasValue && MaxDateTime.HasValue && MinDateTime.Value > MaxDateTime.Value);
 }

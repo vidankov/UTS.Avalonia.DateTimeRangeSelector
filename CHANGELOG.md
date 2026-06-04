@@ -4,6 +4,17 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/)
 
+## [Unreleased]
+
+### Исправлено
+- `RangeChanges` и `ValidationChanges` в `DateTimeRangeSelector` теперь публикуют первый снимок диапазона и валидации после инициализации (`OnApplyTemplate`), без устаревших placeholder-значений при подписке до применения шаблона (R26-8 / #9).
+
+## [0.0.10] - 20.05.2026
+
+### Исправлено
+- CalendarDatePicker теперь использует защищённый от переопределения сторонними темами (например, Actipro) шаблон, что гарантирует корректную синхронизацию `SelectedDate`, `DisplayDateStart` и `DisplayDateEnd` при программном изменении границ.
+- CalendarDatePicker больше не сохраняет расширенные границы (`DisplayDateStart`/`DisplayDateEnd`) после ручного ввода даты, выходящей за пределы `MinDate`/`MaxDate`. Границы принудительно восстанавливаются при потере фокуса.
+
 ## [0.0.9] - 19.05.2026
 
 ### Исправлено

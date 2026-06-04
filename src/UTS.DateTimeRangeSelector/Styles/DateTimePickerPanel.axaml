@@ -12,7 +12,7 @@
 	-->
 
 	<Design.PreviewWith>
-		<StackPanel Width="800" Spacing="10">
+		<StackPanel Width="695" Spacing="10">
 			<StackPanel Background="{DynamicResource SystemRegionBrush}">
 				<controls:DateTimePickerPanel />
 			</StackPanel>
@@ -21,72 +21,89 @@
 
 	<converters:DecimalToIntConverter x:Key="DecimalToIntConverter" />
 
+	<!--
+	If you are using the custom template from ConstrainedCalendarDatePicker.axaml,
+	the following theme is not needed (it is overridden by the more specific
+	ControlTheme defined there).
+
+	If you want to rely on the base CalendarDatePicker theme (e.g., when a
+	third-party theme like Actipro is active), uncomment the block below and
+	ensure that ConstrainedCalendarDatePicker.axaml is NOT included in the
+	merged dictionaries.
+	-->
+	<!--
 	<ControlTheme x:Key="{x:Type controls:ConstrainedCalendarDatePicker}"
-				  TargetType="controls:ConstrainedCalendarDatePicker"
-				  BasedOn="{StaticResource {x:Type CalendarDatePicker}}">
+	TargetType="controls:ConstrainedCalendarDatePicker"
+	BasedOn="{StaticResource {x:Type CalendarDatePicker}}">
 	</ControlTheme>
+	-->
 
 	<ControlTheme x:Key="{x:Type controls:DateTimePickerPanel}" TargetType="controls:DateTimePickerPanel">
 		<Setter Property="Template">
 			<ControlTemplate>
 
-				<StackPanel Orientation="Horizontal">
+				<StackPanel Orientation="Horizontal"
+							IsEnabled="{Binding AreBoundsValid, RelativeSource={RelativeSource TemplatedParent}}">
 
-					<!-- Выбор даты -->
+					<!-- Date selection -->
 					<controls:ConstrainedCalendarDatePicker x:Name="PART_Calendar"
-													   SelectedDate="{Binding SelectedDate,
-																	  RelativeSource={RelativeSource TemplatedParent},
-																	  Mode=TwoWay}"
-													   MinDate="{Binding MinDateTime,
-																 RelativeSource={RelativeSource TemplatedParent}}"
-													   MaxDate="{Binding MaxDateTime,
-																 RelativeSource={RelativeSource TemplatedParent}}"
-													   SelectedDateFormat="Custom"
-													   CustomDateFormatString="{Binding DateTimeFormat.DateFormat,
-																				RelativeSource={RelativeSource TemplatedParent}}"
-													   MinWidth="150" />
+															SelectedDate="{Binding SelectedDate,
+															RelativeSource={RelativeSource TemplatedParent},
+															Mode=TwoWay}"
+															MinDate="{Binding MinDateTime,
+															RelativeSource={RelativeSource TemplatedParent}}"
+															MaxDate="{Binding MaxDateTime,
+															RelativeSource={RelativeSource TemplatedParent}}"
+															SelectedDateFormat="Custom"
+															CustomDateFormatString="{Binding DateTimeFormat.DateFormat,
+															RelativeSource={RelativeSource TemplatedParent}}"
+															MinWidth="100" />
 
-					<TextBlock Text=" - " VerticalAlignment="Center" Margin="5,0" />
+					<TextBlock Text="-" VerticalAlignment="Center" Margin="5,0" />
 
-					<!-- Часы -->
+					<!-- Hours -->
 					<NumericUpDown Value="{Binding Hour,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
 					Mode=TwoWay}"
 					Minimum="0" Maximum="23" Increment="1" FormatString="00"
-					MinWidth="110" HorizontalAlignment="Center"
+					MinWidth="60" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="ч." VerticalAlignment="Center" Margin="2,0,5,0" />
+					<TextBlock Text="{TemplateBinding HourSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,5,0" />
 
-					<!-- Минуты -->
+					<!-- Minutes -->
 					<NumericUpDown Value="{Binding Minute,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
 					Mode=TwoWay}"
 					Minimum="0" Maximum="59" Increment="1" FormatString="00"
-					MinWidth="110" HorizontalAlignment="Center"
+					MinWidth="60" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="мин." VerticalAlignment="Center" Margin="2,0,5,0" />
+					<TextBlock Text="{TemplateBinding MinuteSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,5,0" />
 
-					<!-- Секунды -->
+					<!-- Seconds -->
 					<NumericUpDown Value="{Binding Second,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
 					Mode=TwoWay}"
 					Minimum="0" Maximum="59" Increment="1" FormatString="00"
-					MinWidth="110" HorizontalAlignment="Center"
+					MinWidth="60" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="сек." VerticalAlignment="Center" Margin="2,0,5,0" />
+					<TextBlock Text="{TemplateBinding SecondSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,5,0" />
 
-					<!-- Миллисекунды -->
+					<!-- Milliseconds -->
 					<NumericUpDown Value="{Binding Millisecond,
 					RelativeSource={RelativeSource TemplatedParent},
 					Converter={StaticResource DecimalToIntConverter},
 					Mode=TwoWay}"
 					Minimum="0" Maximum="999" Increment="10" FormatString="000"
-					MinWidth="110" HorizontalAlignment="Center"
+					MinWidth="60" HorizontalAlignment="Center"
 					ButtonSpinnerLocation="Right" />
-					<TextBlock Text="мс." VerticalAlignment="Center" Margin="2,0,0,0" />
+					<TextBlock Text="{TemplateBinding MillisecondSuffix}"
+							   VerticalAlignment="Center" Margin="2,0,0,0" />
 
 				</StackPanel>
 

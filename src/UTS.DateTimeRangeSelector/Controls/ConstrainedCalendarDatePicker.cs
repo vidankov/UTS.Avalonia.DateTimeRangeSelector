@@ -89,11 +89,6 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
                 {
                     SetCurrentValue(SelectedDateProperty, clamped);
                 }
-                else
-                {
-                    ForceTextUpdate();
-                    EnforceBoundaries();
-                }
             }
             else if (change.Property == MinDateProperty || change.Property == MaxDateProperty)
             {
@@ -104,16 +99,26 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
                     {
                         var clamped = ClampDate(SelectedDate);
                         if (clamped != SelectedDate)
+                        {
                             SetCurrentValue(SelectedDateProperty, clamped);
+                        }
                     }
                 }
-                // Always restore calendar boundaries (even if Min>Max, calendar will just ignore invalid range).
-                EnforceBoundaries();
             }
         }
         finally
         {
             _isUpdating = false;
+        }
+
+        // Ensure the text box is synchronised and the calendar's display boundaries/date
+        // reflect the current state after any property change that affects the display.
+        if (change.Property == SelectedDateProperty ||
+            change.Property == MinDateProperty ||
+            change.Property == MaxDateProperty)
+        {
+            ForceTextUpdate();
+            EnforceBoundaries();
         }
     }
 
@@ -157,6 +162,8 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
 
     /// <summary>
     /// Forces the internal TextBox to display <see cref="SelectedDate"/> using the correct format.
+    /// Called after changes to <see cref="SelectedDate"/>, <see cref="MinDate"/>, or <see cref="MaxDate"/>
+    /// to guarantee that the displayed text matches the clamped value, even when reentrant updates occur.
     /// </summary>
     private void ForceTextUpdate()
     {
@@ -186,6 +193,11 @@ public class ConstrainedCalendarDatePicker : CalendarDatePicker
 
         _calendar.DisplayDateStart = MinDate?.Date;
         _calendar.DisplayDateEnd = MaxDate?.Date;
+
+        if (SelectedDate.HasValue)
+        {
+            _calendar.DisplayDate = SelectedDate.Value.Date;
+        }
     }
 
     private DateTime? ClampDate(DateTime? date)

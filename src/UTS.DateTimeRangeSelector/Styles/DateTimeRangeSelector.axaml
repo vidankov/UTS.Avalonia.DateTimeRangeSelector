@@ -12,7 +12,7 @@
 	-->
 
 	<Design.PreviewWith>
-		<StackPanel Width="800" Height="150" Spacing="10">
+		<StackPanel Width="750" Height="200" Margin="5">
 			<StackPanel Background="{DynamicResource SystemRegionBrush}">
 				<controls:DateTimeRangeSelector />
 			</StackPanel>
@@ -50,7 +50,7 @@
 					<StackPanel Orientation="{TemplateBinding Orientation}" Spacing="15">
 
 						<StackPanel Orientation="Vertical">
-							<TextBlock Text="From:" FontWeight="SemiBold" Margin="0,0,0,5" />
+							<TextBlock Text="{TemplateBinding FromLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
 							<controls:DateTimePickerPanel x:Name="PART_FromPanel"
 														  SelectedDateTime="{Binding FromDateTime,
 																			 RelativeSource={RelativeSource TemplatedParent},
@@ -59,11 +59,15 @@
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
-														  DateTimeFormat="{TemplateBinding DateTimeFormat}"/>
+														  DateTimeFormat="{TemplateBinding DateTimeFormat}"
+														  HourSuffix="{TemplateBinding HourSuffix}"
+														  MinuteSuffix="{TemplateBinding MinuteSuffix}"
+														  SecondSuffix="{TemplateBinding SecondSuffix}"
+														  MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
 						</StackPanel>
 
 						<StackPanel Orientation="Vertical">
-							<TextBlock Text="To:" FontWeight="SemiBold" Margin="0,0,0,5" />
+							<TextBlock Text="{TemplateBinding ToLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
 							<controls:DateTimePickerPanel x:Name="PART_ToPanel"
 														  SelectedDateTime="{Binding ToDateTime,
 																			 RelativeSource={RelativeSource TemplatedParent},
@@ -72,10 +76,19 @@
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
-														  DateTimeFormat="{TemplateBinding DateTimeFormat}"/>
+														  DateTimeFormat="{TemplateBinding DateTimeFormat}"
+														  HourSuffix="{TemplateBinding HourSuffix}"
+														  MinuteSuffix="{TemplateBinding MinuteSuffix}"
+														  SecondSuffix="{TemplateBinding SecondSuffix}"
+														  MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
 						</StackPanel>
 
 					</StackPanel>
+
+					<TextBlock Text="{Binding ValidationMessage, RelativeSource={RelativeSource TemplatedParent}}"
+							   Foreground="{DynamicResource SystemErrorTextColor}"
+							   IsVisible="{Binding !IsValid, RelativeSource={RelativeSource TemplatedParent}}"
+							   FontStyle="Italic"/>
 
 				</StackPanel>
 			</ControlTemplate>

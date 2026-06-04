@@ -31,22 +31,17 @@
 	<ItemGroup>
 		<AvaloniaResource Include="Styles\**\*.axaml" />
 		<AvaloniaResource Include="Themes\**\*.axaml" />
+		<AvaloniaResource Include="Themes\DateTimeRangeSelectorTheme.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <AvaloniaXaml Remove="Styles\DateTimePickerPanel.axaml" />
-	  <AvaloniaXaml Remove="Styles\DateTimeRangeSelector.axaml" />
-	  <AvaloniaXaml Remove="Themes\DateTimeRangeSelectorTheme.axaml" />
-	</ItemGroup>
-
-	<ItemGroup>
+	  <AvaloniaResource Update="Styles\ConstrainedCalendarDatePicker.axaml">
+	    <SubType>Designer</SubType>
+	  </AvaloniaResource>
 	  <AvaloniaResource Update="Styles\DateTimePickerPanel.axaml">
 	    <SubType>Designer</SubType>
 	  </AvaloniaResource>
 	  <AvaloniaResource Update="Styles\DateTimeRangeSelector.axaml">
-	    <SubType>Designer</SubType>
-	  </AvaloniaResource>
-	  <AvaloniaResource Update="Themes\DateTimeRangeSelectorTheme.axaml">
 	    <SubType>Designer</SubType>
 	  </AvaloniaResource>
 	</ItemGroup>
