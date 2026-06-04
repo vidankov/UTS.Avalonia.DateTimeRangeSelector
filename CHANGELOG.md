@@ -6,8 +6,39 @@
 
 ## [Unreleased]
 
+### Добавлено
+- Свойство `AllowPresetTruncation` в `DateTimeRangeSelector` (по умолчанию `false`). В строгом режиме выбрасывается `PresetOutOfBoundsException`, если запрошенная длительность не умещается в границы `MinDateTime`/`MaxDateTime`. При `true` поведение прежнее – диапазон молча усекается (#7).
+- Класс `PresetOutOfBoundsException` с информацией о запрошенной и результирующей длительности и о границах (#7).
+- Свойство только для чтения `AreBoundsValid` в `DateTimePickerPanel`. Сигнализирует о противоречивых границах и через шаблон отключает панель, не затрагивая внешний `IsEnabled` (#10, #16).
+- В стандартном шаблоне `DateTimeRangeSelector` теперь отображается `ValidationMessage` – текст ошибки валидации, видимый при `!IsValid` (#15).
+- Новые стилизуемые свойства для локализации заголовков и единиц измерения:
+  - `FromLabel` / `ToLabel` в `DateTimeRangeSelector` (по умолчанию "From:" / "To:") (#21).
+  - `HourSuffix`, `MinuteSuffix`, `SecondSuffix`, `MillisecondSuffix` в `DateTimePickerPanel` и `DateTimeRangeSelector` (по умолчанию русские сокращения "ч.", "мин.", "сек.", "мс.") (#21).
+- Свойство `TimeProvider` теперь является `StyledProperty<TimeProvider?>`, что позволяет привязывать его в XAML и стилях; значение по умолчанию – `TimeProvider.System` (#21).
+
+### Изменено
+- Метод `CalculateRangeFromAnchor` переименован в `CalculatePresetRange` и теперь сдвигает диапазон вперёд, когда `MinDateTime` превышает якорь, сохраняя запрошенную длительность (#7).
+- Логика `Coerce` в `DateTimeRangeSelector` больше не обнуляет `From`/`To` при противоречивых границах – значения сохраняются, контрол блокируется через `AreBoundsValid`. При восстановлении границ сохранённые значения проходят стандартную коэрцию (#10).
+- `DateTimePickerPanel` теперь проверяет `AreBoundsValid` и не выполняет клампинг `SelectedDate`/`SelectedDateTime` при невалидных границах. Корневой элемент шаблона привязан к `AreBoundsValid` для отключения (#16).
+- Минимальная ширина элементов в панели выбора времени (`DateTimePickerPanel`) уменьшена для поддержки более компактных макетов (календарь: 150 → 100, NumericUpDown: 110 → 60) (#21).
+- Тема `DateTimeRangeSelectorTheme` переименована в `.xaml` для устранения конфликта двойной компиляции XAML; из `.csproj` убраны все исключения с помощью `AvaloniaXaml Remove`.
+
 ### Исправлено
-- `RangeChanges` и `ValidationChanges` в `DateTimeRangeSelector` теперь публикуют первый снимок диапазона и валидации после инициализации (`OnApplyTemplate`), без устаревших placeholder-значений при подписке до применения шаблона (R26-8 / #9).
+- `RangeChanges` и `ValidationChanges` публикуют первый снимок только после инициализации (`OnApplyTemplate`), исключая устаревшие placeholder-значения для ранних подписчиков (#9).
+- Владелец метаданных `DateTimeFormatProperty` в `DateTimePickerPanel` исправлен на `DateTimePickerPanel` (был `DateTimeRangeSelector`) (#1).
+- `DateTimeRangeCoercion.Clamp` при `Min > Max` возвращает исходное значение, а не неявно зажимает его (#2).
+- `DateTimeRange.Duration` теперь возвращает `null` для инвертированного диапазона (`From > To`) вместо отрицательного `TimeSpan` (#3), а также для точечного диапазона (`From == To`) вместо `TimeSpan.Zero` (#20).
+- Свойства `FromDateTime` и `ToDateTime` получили `coerce`-колбэк для немедленного приведения к UTC; значения с `Unspecified`-Kind больше не просачиваются в хранилище (#5). Это также гарантирует, что `OldFrom`/`OldTo` в `RangeChangedEventArgs` и элементы потока `RangeChanges` всегда в UTC (#11).
+- Команда `ApplyPresetCommand` маршрутизируется через публичный `ApplyPreset` (проверка положительности длительности), `CanExecute` возвращает `false` для неположительных значений (#6).
+- При восстановлении валидных границ после `Min > Max` ранее введённые значения `From`/`To` больше не теряются (#10).
+- `DateTimePickerPanel` больше не генерирует ложное событие `SelectedDateTimeChanged` с `OldValue=null` при (пере)применении шаблона (#8).
+- Свойства `MinDateTime` и `MaxDateTime` в `DateTimeRangeSelector` теперь также приводятся к UTC при присвоении; `DateTimeRangeCoercion.Clamp` нормализует все аргументы к UTC, исключая ошибки сравнения `DateTimeKind` (#12).
+- Текстовое поле в `ConstrainedCalendarDatePicker` теперь корректно отображает дату после клампинга `SelectedDate` даже при реентерабельных вызовах (#14).
+- Компоненты времени в `DateTimePickerPanel` (`Hour`, `Minute`, `Second`, `Millisecond`) теперь принудительно ограничены допустимыми диапазонами (0–23, 0–59, 0–59, 0–999) непосредственно в сеттерах, предотвращая неявный сдвиг даты при установке значений вне диапазона (#17).
+- `DateTimeRange` переопределяет `Equals` и `GetHashCode` с нормализацией `DateTimeKind` к UTC, гарантируя семантическое равенство одинаковых моментов времени независимо от `Kind` (#19).
+- В `ConstrainedCalendarDatePicker` исправлена синхронизация `Calendar.DisplayDate` с `SelectedDate`, чтобы при программном изменении даты в календаре открывался корректный месяц (#22).
+- Все тематические кисти в шаблонах заменены на тематически-нейтральные (`SystemErrorTextColor` вместо `SystemControlErrorTextForegroundBrush`), обеспечивая корректное отображение в разных темах (#21).
+- Добавлены отсутствовавшие приватные поля `_fromPanel` и `_toPanel` для частей шаблона, которые теперь заполняются в `OnApplyTemplate`, улучшая поддержку контракта `TemplatePart` (#21).
 
 ## [0.0.10] - 20.05.2026
 
