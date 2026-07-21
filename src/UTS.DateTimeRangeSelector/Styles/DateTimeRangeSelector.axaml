@@ -1,74 +1,134 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
-					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-					xmlns:controls="using:UTS.DateTimeRangeSelector.Controls"
-					xmlns:core="using:UTS.DateTimeRangeSelector.Core">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:UTS.DateTimeRangeSelector.Controls"
+                    xmlns:core="using:UTS.DateTimeRangeSelector.Core">
 
-	<!--
-	Additional resources
-	Using Control Themes:
-	https://docs.avaloniaui.net/docs/basics/user-interface/styling/control-themes
-	Using Theme Variants:
-	https://docs.avaloniaui.net/docs/guides/styles-and-resources/how-to-use-theme-variants
-	-->
+    <!--
+    Additional resources
+    Using Control Themes:
+    https://docs.avaloniaui.net/docs/basics/user-interface/styling/control-themes
+    Using Theme Variants:
+    https://docs.avaloniaui.net/docs/guides/styles-and-resources/how-to-use-theme-variants
+    -->
 
-	<Design.PreviewWith>
-		<StackPanel Width="750" Height="200" Margin="5">
-			<StackPanel Background="{DynamicResource SystemRegionBrush}">
-				<controls:DateTimeRangeSelector />
-			</StackPanel>
-		</StackPanel>
-	</Design.PreviewWith>
+    <Design.PreviewWith>
+        <StackPanel Width="750" Height="200" Margin="5">
+            <StackPanel Background="{DynamicResource SystemRegionBrush}">
+                <controls:DateTimeRangeSelector />
+            </StackPanel>
+        </StackPanel>
+    </Design.PreviewWith>
 
-	<ControlTheme x:Key="{x:Type controls:DateTimeRangeSelector}" TargetType="controls:DateTimeRangeSelector">
-		<Setter Property="Template">
-			<ControlTemplate>
-				<StackPanel Orientation="Vertical"
-							Spacing="15"
-							IsEnabled="{Binding AreBoundsValid, RelativeSource={RelativeSource TemplatedParent}}">
+    <ControlTheme x:Key="{x:Type controls:DateTimeRangeSelector}" TargetType="controls:DateTimeRangeSelector">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid RowDefinitions="*,Auto"
+                      IsEnabled="{Binding AreBoundsValid, RelativeSource={RelativeSource TemplatedParent}}">
 
-					<!-- Пресеты -->
-					<ItemsControl ItemsSource="{TemplateBinding Presets}"
-								  IsVisible="{TemplateBinding ShowPresets}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<WrapPanel />
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-						<ItemsControl.ItemTemplate>
-							<DataTemplate DataType="core:PresetItem">
-								<Button Content="{Binding Label}"
-										Command="{Binding ApplyPresetCommand,
-										RelativeSource={RelativeSource FindAncestor,
-										AncestorType=controls:DateTimeRangeSelector}}"
-										CommandParameter="{Binding Duration}"
-										Margin="2" Padding="6,4" />
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
+                    <Grid x:Name="LayoutGrid"
+                          ColumnDefinitions="Auto,Auto,Auto"
+                          RowDefinitions="Auto,Auto,Auto"
+                          Margin="0,0,0,15">
 
-					<!-- Основной макет -->
-					<StackPanel Orientation="{TemplateBinding Orientation}" Spacing="15">
+                        <Interaction.Behaviors>
+                            <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 Value="{x:Static Orientation.Vertical}">
+                                <ChangePropertyAction PropertyName="HorizontalAlignment" Value="Stretch" />
+                            </DataTriggerBehavior>
+                            <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 Value="{x:Static Orientation.Horizontal}">
+                                <ChangePropertyAction PropertyName="HorizontalAlignment" Value="Center" />
+                            </DataTriggerBehavior>
+                        </Interaction.Behaviors>
 
-						<StackPanel Orientation="Vertical">
-							<TextBlock Text="{TemplateBinding FromLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
-							<controls:DateTimePickerPanel x:Name="PART_FromPanel"
-														  SelectedDateTime="{Binding FromDateTime,
+                        <ItemsControl x:Name="PresetsControl"
+                                      ItemsSource="{TemplateBinding Presets}"
+                                      IsVisible="{TemplateBinding ShowPresets}">
+                            <Interaction.Behaviors>
+                                <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     Value="{x:Static Orientation.Vertical}">
+                                    <ChangePropertyAction PropertyName="Grid.Row" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.Column" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.ColumnSpan" Value="3" />
+                                    <ChangePropertyAction PropertyName="Margin" Value="0" />
+                                </DataTriggerBehavior>
+                                <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     Value="{x:Static Orientation.Horizontal}">
+                                    <ChangePropertyAction PropertyName="Grid.Row" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.Column" Value="1" />
+                                    <ChangePropertyAction PropertyName="Grid.ColumnSpan" Value="1" />
+                                    <ChangePropertyAction PropertyName="Margin" Value="15,0" />
+                                </DataTriggerBehavior>
+                            </Interaction.Behaviors>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="core:PresetItem">
+                                    <Button Content="{Binding Label}"
+                                            Command="{Binding ApplyPresetCommand,
+                                                      RelativeSource={RelativeSource FindAncestor,
+                                            AncestorType=controls:DateTimeRangeSelector}}"
+                                            CommandParameter="{Binding Duration}"
+                                            Margin="2" Padding="6,4" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel x:Name="FromPanel" Orientation="Vertical">
+                            <Interaction.Behaviors>
+                                <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     Value="{x:Static Orientation.Vertical}">
+                                    <ChangePropertyAction PropertyName="Grid.Row" Value="1" />
+                                    <ChangePropertyAction PropertyName="Grid.Column" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.ColumnSpan" Value="3" />
+                                    <ChangePropertyAction PropertyName="Margin" Value="0" />
+                                </DataTriggerBehavior>
+                                <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     Value="{x:Static Orientation.Horizontal}">
+                                    <ChangePropertyAction PropertyName="Grid.Row" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.Column" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.ColumnSpan" Value="1" />
+                                    <ChangePropertyAction PropertyName="Margin" Value="0,0,15,0" />
+                                </DataTriggerBehavior>
+                            </Interaction.Behaviors>
+                            <TextBlock Text="{TemplateBinding FromLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
+                            <controls:DateTimePickerPanel x:Name="PART_FromPanel"
+                                                          SelectedDateTime="{Binding FromDateTime,
 																			 RelativeSource={RelativeSource TemplatedParent},
-																			 Mode=TwoWay}"
-														  MinDateTime="{Binding MinDateTime,
-																		RelativeSource={RelativeSource TemplatedParent}}"
-														  MaxDateTime="{Binding MaxDateTime,
-																		RelativeSource={RelativeSource TemplatedParent}}"
-														  DateTimeFormat="{TemplateBinding DateTimeFormat}"
-														  HourSuffix="{TemplateBinding HourSuffix}"
-														  MinuteSuffix="{TemplateBinding MinuteSuffix}"
-														  SecondSuffix="{TemplateBinding SecondSuffix}"
-														  MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
-						</StackPanel>
+                                                                             Mode=TwoWay}"
+                                                          MinDateTime="{Binding MinDateTime,
+                                                                        RelativeSource={RelativeSource TemplatedParent}}"
+                                                          MaxDateTime="{Binding MaxDateTime,
+                                                                        RelativeSource={RelativeSource TemplatedParent}}"
+                                                          DateTimeFormat="{TemplateBinding DateTimeFormat}"
+                                                          HourSuffix="{TemplateBinding HourSuffix}"
+                                                          MinuteSuffix="{TemplateBinding MinuteSuffix}"
+                                                          SecondSuffix="{TemplateBinding SecondSuffix}"
+                                                          MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
+                        </StackPanel>
 
-						<StackPanel Orientation="Vertical">
-							<TextBlock Text="{TemplateBinding ToLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
-							<controls:DateTimePickerPanel x:Name="PART_ToPanel"
+                        <StackPanel x:Name="ToPanel" Orientation="Vertical">
+                            <Interaction.Behaviors>
+                                <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     Value="{x:Static Orientation.Vertical}">
+                                    <ChangePropertyAction PropertyName="Grid.Row" Value="2" />
+                                    <ChangePropertyAction PropertyName="Grid.Column" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.ColumnSpan" Value="3" />
+                                    <ChangePropertyAction PropertyName="Margin" Value="0" />
+                                </DataTriggerBehavior>
+                                <DataTriggerBehavior Binding="{Binding Orientation, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     Value="{x:Static Orientation.Horizontal}">
+                                    <ChangePropertyAction PropertyName="Grid.Row" Value="0" />
+                                    <ChangePropertyAction PropertyName="Grid.Column" Value="2" />
+                                    <ChangePropertyAction PropertyName="Grid.ColumnSpan" Value="1" />
+                                    <ChangePropertyAction PropertyName="Margin" Value="15,0,0,0" />
+                                </DataTriggerBehavior>
+                            </Interaction.Behaviors>
+                            <TextBlock Text="{TemplateBinding ToLabel}" FontWeight="SemiBold" Margin="0,0,0,5" />
+                            <controls:DateTimePickerPanel x:Name="PART_ToPanel"
 														  SelectedDateTime="{Binding ToDateTime,
 																			 RelativeSource={RelativeSource TemplatedParent},
 																			 Mode=TwoWay}"
@@ -76,22 +136,23 @@
 																		RelativeSource={RelativeSource TemplatedParent}}"
 														  MaxDateTime="{Binding MaxDateTime,
 																		RelativeSource={RelativeSource TemplatedParent}}"
-														  DateTimeFormat="{TemplateBinding DateTimeFormat}"
-														  HourSuffix="{TemplateBinding HourSuffix}"
-														  MinuteSuffix="{TemplateBinding MinuteSuffix}"
-														  SecondSuffix="{TemplateBinding SecondSuffix}"
+                                                          DateTimeFormat="{TemplateBinding DateTimeFormat}"
+                                                          HourSuffix="{TemplateBinding HourSuffix}"
+                                                          MinuteSuffix="{TemplateBinding MinuteSuffix}"
+                                                          SecondSuffix="{TemplateBinding SecondSuffix}"
 														  MillisecondSuffix="{TemplateBinding MillisecondSuffix}"/>
-						</StackPanel>
+                        </StackPanel>
 
-					</StackPanel>
+                    </Grid>
 
-					<TextBlock Text="{Binding ValidationMessage, RelativeSource={RelativeSource TemplatedParent}}"
-							   Foreground="{DynamicResource SystemErrorTextColor}"
-							   IsVisible="{Binding !IsValid, RelativeSource={RelativeSource TemplatedParent}}"
-							   FontStyle="Italic"/>
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding ValidationMessage, RelativeSource={RelativeSource TemplatedParent}}"
+                               Foreground="{DynamicResource SystemErrorTextColor}"
+                               IsVisible="{Binding !IsValid, RelativeSource={RelativeSource TemplatedParent}}"
+                               FontStyle="Italic"/>
 
-				</StackPanel>
-			</ControlTemplate>
-		</Setter>
-	</ControlTheme>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
 </ResourceDictionary>
